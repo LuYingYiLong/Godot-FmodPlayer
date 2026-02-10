@@ -132,9 +132,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\fmod_channel.h" />
+    <ClInclude Include="src\fmod_channel_group.h" />
+    <ClInclude Include="src\fmod_sound.h" />
+    <ClInclude Include="src\fmod_sound_player.h" />
+    <ClInclude Include="src\fmod_server.h" />
+    <ClInclude Include="src\fmod_stream_player.h" />
     <ClInclude Include="src\register_types.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\fmod_channel.cpp" />
+    <ClCompile Include="src\fmod_channel_group.cpp" />
+    <ClCompile Include="src\fmod_sound.cpp" />
+    <ClCompile Include="src\fmod_sound_player.cpp" />
+    <ClCompile Include="src\fmod_server.cpp" />
+    <ClCompile Include="src\fmod_stream_player.cpp" />
     <ClCompile Include="src\register_types.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

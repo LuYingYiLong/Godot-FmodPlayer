@@ -43,7 +43,7 @@ elif env["platform"] == "ios":
 else:
     env.Append(CXXFLAGS=['/utf-8'])
     env.Append(LIBPATH=["src/thirdparty/fmod/lib/x64"])
-    env.Append(LIBS=["fmod_vc"]) # 链接 Core
+    env.Append(LIBS=["fmod_vc"])
     library = env.SharedLibrary(
         "demo/bin/fmod_player{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
         source=sources,
