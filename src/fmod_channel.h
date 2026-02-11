@@ -24,7 +24,7 @@ namespace godot {
 		void set_paused(bool paused);
 		void set_volume(float volume);
 		void set_pitch(float pitch);
-		void set_position(int position, FmodServer::Timeunit timeunit = FmodServer::TIMEUNIT_MS);
+		void set_position(int position, FmodSystem::Timeunit timeunit = FmodSystem::TIMEUNIT_MS);
 	};
 }
 

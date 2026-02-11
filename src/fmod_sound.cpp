@@ -18,7 +18,7 @@ namespace godot {
 	}
 
 	Ref<FmodSound> FmodSound::load_from_file(const String& p_path) {
-		return FmodServer::create_sound_from_file(p_path, FmodServer::MODE_DEFAULT);
+		return FmodServer::get_main_system()->create_sound_from_file(p_path, FmodSystem::MODE_DEFAULT);
 	}
 
 	double FmodSound::get_length() const {

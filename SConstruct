@@ -12,6 +12,9 @@ env = SConscript("godot-cpp/SConstruct")
 # - CPPDEFINES are for pre-processor defines
 # - LINKFLAGS are for linking flags
 
+env.Append(CCFLAGS=["/utf-8"])
+env.Append(CXXFLAGS=["/utf-8"])
+env.Append(CCFLAGS=["/wd4828"])
 # tweak this if you want to use different folders, or more folders, to store your source code in.
 env.Append(CPPPATH=["src/", "src/thirdparty/fmod/inc"])
 sources = Glob("src/*.cpp")

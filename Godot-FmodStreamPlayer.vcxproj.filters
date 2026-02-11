@@ -48,6 +48,15 @@
     <ClInclude Include="src\fmod_audio_stream.h">
       <Filter>Header Files\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="src\fmod_utils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fmod_sound_emiter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fmod_system.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\register_types.cpp">
@@ -76,6 +85,12 @@
     </ClCompile>
     <ClCompile Include="src\fmod_audio_stream.cpp">
       <Filter>Source Files\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fmod_sound_emiter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fmod_system.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

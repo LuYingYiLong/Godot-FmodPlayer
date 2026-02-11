@@ -8,6 +8,7 @@
 #include "fmod_sound.h"
 #include "fmod_audio_player.h"
 #include "fmod_server.h"
+#include "fmod_system.h"
 
 #include <gdextension_interface.h>
 #include <godot_cpp/core/defs.hpp>
@@ -32,6 +33,7 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(FmodSound);
 	GDREGISTER_CLASS(FmodAudioPlayer);
 	GDREGISTER_CLASS(FmodServer);
+	GDREGISTER_CLASS(FmodSystem);
 	fmod_server_instance = memnew(FmodServer);												// 初始化 FmodServer
 	Engine::get_singleton()->register_singleton("FmodServer", FmodServer::get_singleton());	// 注册进 Engine 单例
 
@@ -54,9 +56,9 @@ void uninitialize_example_module(ModuleInitializationLevel p_level) {
 	}
 
 	if (fmod_server_instance) {
-		Engine::get_singleton()->unregister_singleton("FmodServer");					// 先从 Engine 移除单例
-		memdelete(fmod_server_instance);												// 再释放 FmodServer
-		fmod_server_instance = nullptr;													// 最后将 FmodServer 置空
+		Engine::get_singleton()->unregister_singleton("FmodServer");						// 先从 Engine 移除单例
+		memdelete(fmod_server_instance);													// 再释放 FmodServer
+		fmod_server_instance = nullptr;														// 最后将 FmodServer 置空
 	}
 }
 

@@ -4,7 +4,7 @@
 #include <fmod.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/core/class_db.hpp>
-#include "fmod_server.h"
+#include "fmod_system.h"
 
 namespace godot {
 	class FmodChannelGroup : public RefCounted {

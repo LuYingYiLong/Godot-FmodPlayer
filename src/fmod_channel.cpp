@@ -6,7 +6,7 @@ namespace godot {
 		ClassDB::bind_method(D_METHOD("set_paused", "paused"), &FmodChannel::set_paused);
 		ClassDB::bind_method(D_METHOD("set_volume", "volume"), &FmodChannel::set_volume);
 		ClassDB::bind_method(D_METHOD("set_pitch", "pitch"), &FmodChannel::set_pitch);
-		ClassDB::bind_method(D_METHOD("set_position", "position", "timeunit"), &FmodChannel::set_position, DEFVAL(FmodServer::TIMEUNIT_MS));
+		ClassDB::bind_method(D_METHOD("set_position", "position", "timeunit"), &FmodChannel::set_position, DEFVAL(FmodSystem::TIMEUNIT_MS));
 	}
 
 	FmodChannel::FmodChannel() {
@@ -32,7 +32,7 @@ namespace godot {
 		FMOD_CHECK(channel->setPitch(pitch));
 	}
 		
-	void FmodChannel::set_position(int position, FmodServer::Timeunit timeunit) {
+	void FmodChannel::set_position(int position, FmodSystem::Timeunit timeunit) {
 		FMOD_CHECK(channel->setPosition(position, timeunit));
 	}
 }

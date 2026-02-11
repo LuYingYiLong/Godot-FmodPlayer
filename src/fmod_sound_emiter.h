@@ -1,0 +1,6 @@
+#ifndef FMOD_SOUND_EMITER_H
+#define FMOD_SOUND_EMITER_H
+
+
+
+#endif // !FMOD_SOUND_EMITER_H

@@ -140,7 +140,10 @@
     <ClInclude Include="src\fmod_sound.h" />
     <ClInclude Include="src\fmod_server.h" />
     <ClInclude Include="src\fmod_audio_player.h" />
+    <ClInclude Include="src\fmod_sound_emiter.h" />
+    <ClInclude Include="src\fmod_system.h" />
     <ClInclude Include="src\register_types.h" />
+    <ClInclude Include="src\fmod_utils.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\fmod_audio.cpp" />
@@ -151,6 +154,8 @@
     <ClCompile Include="src\fmod_sound.cpp" />
     <ClCompile Include="src\fmod_server.cpp" />
     <ClCompile Include="src\fmod_audio_player.cpp" />
+    <ClCompile Include="src\fmod_sound_emiter.cpp" />
+    <ClCompile Include="src\fmod_system.cpp" />
     <ClCompile Include="src\register_types.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

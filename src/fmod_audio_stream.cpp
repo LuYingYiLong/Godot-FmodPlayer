@@ -15,7 +15,7 @@ namespace godot {
 
 	void FmodAudioStream::set_file_path(const String& p_path) {
 		file_path = p_path;
-		sound = FmodServer::create_sound_from_file(p_path, FmodServer::MODE_CREATESTREAM);
+		sound = FmodServer::get_main_system()->create_sound_from_file(p_path, FmodSystem::MODE_CREATESTREAM);
 	}
 
 }
