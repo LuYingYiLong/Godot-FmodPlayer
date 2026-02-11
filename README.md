@@ -1,13 +1,11 @@
-<img width="3400" height="920" alt="fmod_player_banner" src="https://github.com/user-attachments/assets/92d809c8-3bee-4067-a989-8382b0baa55c" />
+<img width="3400" height="920" alt="fmod_player_banner" src="https://github.com/user-attachments/assets/ac4f4eb7-1253-41e9-b304-11dfcb40f5a5" />
 
-# Godot-FmodStreamPlayer
+# Godot-FmodPlayer
 ✨ 核心功能
 
 • 多格式支持：MP3、WAV、OGG、FSB
 
 • 灵活加载：文件、内存、Godot PCK 资源
-
-• 3D 音频：空间定位、衰减、遮挡
 
 • 动态混音：ChannelGroup、实时参数控制
 
