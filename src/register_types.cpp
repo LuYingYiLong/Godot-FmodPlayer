@@ -1,10 +1,12 @@
 #include "register_types.h"
 
+#include "fmod_audio.h"
+#include "fmod_audio_sample.h"
+#include "fmod_audio_stream.h"
 #include "fmod_channel.h"
 #include "fmod_channel_group.h"
 #include "fmod_sound.h"
-#include "fmod_sound_player.h"
-#include "fmod_stream_player.h"
+#include "fmod_audio_player.h"
 #include "fmod_server.h"
 
 #include <gdextension_interface.h>
@@ -22,11 +24,13 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
 		return;
 	}
 
+	GDREGISTER_ABSTRACT_CLASS(FmodAudio);
+	GDREGISTER_CLASS(FmodAudioSample);
+	GDREGISTER_CLASS(FmodAudioStream);
 	GDREGISTER_CLASS(FmodChannel);
 	GDREGISTER_CLASS(FmodChannelGroup);
 	GDREGISTER_CLASS(FmodSound);
-	GDREGISTER_CLASS(FmodSoundPlayer);
-	GDREGISTER_CLASS(FmodStreamPlayer);
+	GDREGISTER_CLASS(FmodAudioPlayer);
 	GDREGISTER_CLASS(FmodServer);
 	fmod_server_instance = memnew(FmodServer);												// 初始化 FmodServer
 	Engine::get_singleton()->register_singleton("FmodServer", FmodServer::get_singleton());	// 注册进 Engine 单例

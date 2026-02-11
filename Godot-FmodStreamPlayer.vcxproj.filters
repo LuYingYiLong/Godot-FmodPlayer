@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Resources">
+      <UniqueIdentifier>{47f71367-8aa0-4442-80b6-def2bfb48f99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Resources">
+      <UniqueIdentifier>{eff5046d-7f57-4294-9609-a12be4b9eb7a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\register_types.h">
@@ -21,10 +27,7 @@
     <ClInclude Include="src\fmod_server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\fmod_sound_player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fmod_stream_player.h">
+    <ClInclude Include="src\fmod_audio_player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\fmod_sound.h">
@@ -36,6 +39,15 @@
     <ClInclude Include="src\fmod_channel_group.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\fmod_audio.h">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fmod_audio_sample.h">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fmod_audio_stream.h">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\register_types.cpp">
@@ -44,10 +56,7 @@
     <ClCompile Include="src\fmod_server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\fmod_sound_player.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fmod_stream_player.cpp">
+    <ClCompile Include="src\fmod_audio_player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\fmod_sound.cpp">
@@ -58,6 +67,15 @@
     </ClCompile>
     <ClCompile Include="src\fmod_channel_group.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fmod_audio.cpp">
+      <Filter>Source Files\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fmod_audio_sample.cpp">
+      <Filter>Source Files\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fmod_audio_stream.cpp">
+      <Filter>Source Files\Resources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

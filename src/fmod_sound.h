@@ -21,13 +21,11 @@ namespace godot {
 		~FmodSound();
 
 		FMOD::Sound* sound = nullptr;
-		String file_path;
 		PackedByteArray data;
-		int length = 0;
+		String file_path;
 
-		Ref<FmodSound> load_from_file(const String& p_path);
-		PackedByteArray get_data() const { return data; }
-		int get_length() const { return length; }
+		static Ref<FmodSound> load_from_file(const String& p_path);
+		double get_length() const;
 	};
 }
 
