@@ -2,10 +2,13 @@
 
 [ext_resource type="Script" uid="uid://br0y21ar1nbea" path="res://main.gd" id="1_ig7tw"]
 [ext_resource type="FmodAudioSample" uid="uid://r8lifi7wfnoh" path="res://new_fmod_audio_sample.tres" id="2_0xm2m"]
+[ext_resource type="AudioStream" uid="uid://ds2lcfmh6hhis" path="res://Approaching Nirvana - Frontier.mp3" id="3_h2yge"]
 
 [node name="Main" type="Node" unique_id=831127703]
 script = ExtResource("1_ig7tw")
 
 [node name="FmodAudioPlayer" type="FmodAudioPlayer" parent="." unique_id=575150525]
 audio = ExtResource("2_0xm2m")
-playing = true
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=178312100]
+stream = ExtResource("3_h2yge")

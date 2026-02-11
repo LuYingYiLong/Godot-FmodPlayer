@@ -74,6 +74,8 @@ namespace godot {
 		ClassDB::bind_static_method("FmodServer", D_METHOD("create_channel_group", "name"), &FmodServer::create_channel_group);
 		ClassDB::bind_static_method("FmodServer", D_METHOD("play_sound", "sound", "channel_group", "paused"), &FmodServer::play_sound);
 		ClassDB::bind_static_method("FmodServer", D_METHOD("play_sound_use_master_channel_group", "sound", "paused"), &FmodServer::play_sound_use_master_channel_group);
+		ClassDB::bind_static_method("FmodServer", D_METHOD("get_latency_ms"), &FmodServer::get_latency_ms);
+		ClassDB::bind_static_method("FmodServer", D_METHOD("get_cpu_usage"), &FmodServer::get_cpu_usage);
 	}
 
 	FmodServer::FmodServer() {
@@ -92,6 +94,17 @@ namespace godot {
 		}
 		FMOD_CHECK(fmod_system->getMasterChannelGroup(&master_channel_group->channel_group));
 		UtilityFunctions::print("FMOD Completed.\nFMOD Version: ", get_version());
+
+		// 注册自定义监视器
+		Performance* perf = Performance::get_singleton();
+		if (perf) {
+			perf->add_custom_monitor("FMOD/DSP", callable_mp(this, &FmodServer::_get_dsp));
+			perf->add_custom_monitor("FMOD/Stream", callable_mp(this, &FmodServer::_get_stream));
+			perf->add_custom_monitor("FMOD/Geometry", callable_mp(this, &FmodServer::_get_geometry));
+			perf->add_custom_monitor("FMOD/Update", callable_mp(this, &FmodServer::_get_update));
+			perf->add_custom_monitor("FMOD/Convolution1", callable_mp(this, &FmodServer::_get_convolution1));
+			perf->add_custom_monitor("FMOD/Convolution2", callable_mp(this, &FmodServer::_get_convolution2));
+		}
 	}
 
 	FmodServer::~FmodServer() {
@@ -99,6 +112,12 @@ namespace godot {
 		singleton = nullptr;
 		
 		FMOD_CHECK(fmod_system->release());
+
+		// 注销自定义监视器
+		Performance* perf = Performance::get_singleton();
+		if (perf) {
+			perf->remove_custom_monitor("FMOD/DSP");
+		}
 	}
 
 	FmodServer* FmodServer::get_singleton() {
@@ -236,5 +255,62 @@ namespace godot {
 
 	Ref<FmodChannel> FmodServer::play_sound_use_master_channel_group(Ref<FmodSound> sound, bool paused) {
 		return play_sound(sound, master_channel_group, paused);
+	}
+
+	double FmodServer::get_latency_ms() {
+		if (!fmod_system) return 0.0;
+
+		unsigned int length = 0;
+		int buffers = 0;
+		FMOD_CHECK(fmod_system->getDSPBufferSize(&length, &buffers));
+
+		int sample_rate = 48000;
+		FMOD_SPEAKERMODE speakermode = FMOD_SPEAKERMODE_DEFAULT;
+		FMOD_CHECK(fmod_system->getSoftwareFormat(&sample_rate, &speakermode, nullptr));
+		return (double)(length * buffers) * 1000.0f / sample_rate;
+	}
+
+	Dictionary FmodServer::get_cpu_usage() {
+		Dictionary result;
+		if (!fmod_system) return result;
+		FMOD_CPU_USAGE cpu_usage;
+		FMOD_CHECK(fmod_system->getCPUUsage(&cpu_usage));
+		result["dsp"] = cpu_usage.dsp;
+		result["stream"] = cpu_usage.stream;
+		result["geometry"] = cpu_usage.geometry;
+		result["update"] = cpu_usage.update;
+		result["convolution1"] = cpu_usage.convolution1;
+		result["convolution2"] = cpu_usage.convolution2;
+		return result;
+	}
+
+	double FmodServer::_get_dsp() const {
+		double dsp = get_cpu_usage().get("dsp", 0.0);
+		return dsp;
+	}
+
+	double FmodServer::_get_stream() const {
+		double stream = get_cpu_usage().get("stream", 0.0);
+		return stream;
+	}
+
+	double FmodServer::_get_geometry() const {
+		double geometry = get_cpu_usage().get("geometry", 0.0);
+		return geometry;
+	}
+
+	double FmodServer::_get_update() const {
+		double update = get_cpu_usage().get("update", 0.0);
+		return update;
+	}
+
+	double FmodServer::_get_convolution1() const {
+		double convolution1 = get_cpu_usage().get("convolution1", 0.0);
+		return convolution1;
+	}
+
+	double FmodServer::_get_convolution2() const {
+		double convolution2 = get_cpu_usage().get("convolution2", 0.0);
+		return convolution2;
 	}
 }

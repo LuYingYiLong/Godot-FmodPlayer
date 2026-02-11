@@ -7,6 +7,7 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/classes/performance.hpp>
 
 #define FMOD_CHECK(result) \
 	do { \
@@ -29,6 +30,12 @@ namespace godot {
 		static FmodServer* singleton;
 
 	private:
+		double _get_dsp() const;
+		double _get_stream() const;
+		double _get_geometry() const;
+		double _get_update() const;
+		double _get_convolution1() const;
+		double _get_convolution2() const;
 
 	protected:
 		static void _bind_methods();
@@ -113,6 +120,8 @@ namespace godot {
 		static Ref<FmodChannelGroup> create_channel_group(const String& p_name);									// 创建 FmodChannelGroup
 		static Ref<FmodChannel> play_sound(Ref<FmodSound> sound, Ref<FmodChannelGroup> channel_group, bool paused = false); // 创建 FmodChannel
 		static Ref<FmodChannel> play_sound_use_master_channel_group(Ref<FmodSound> sound, bool paused = false);		// 使用 MasterChannelGroup 创建 FmodChannel
+		static double get_latency_ms();
+		static Dictionary get_cpu_usage();
 	};
 }
 
