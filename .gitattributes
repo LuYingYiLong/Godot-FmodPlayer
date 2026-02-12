@@ -63,6 +63,6 @@
 #*.RTF   diff=astextplain
 
 # Only include the addons folder when downloading from the Asset Library.
-/**             export-ignore
-/demo           !export-ignore
-/demo/**       !export-ignore
+/*              export-ignore      # 只忽略根目录下的直接内容
+!/demo          !export-ignore     # 包含 demo 目录
+!/demo/bin      !export-ignore     # 包含 demo/bin 目录
