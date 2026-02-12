@@ -10,11 +10,13 @@ namespace godot {
 	}
 	
 	FmodChannelGroup::~FmodChannelGroup() {
-		if (channel_group)
+		if (channel_group) {
 			channel_group->release();
+			channel_group = nullptr;
+		}
 	}
 
-	void FmodChannelGroup::add_group(Ref<FmodChannelGroup> child_group, bool propagatedspclock) {
-		FMOD_CHECK(channel_group->addGroup(child_group->channel_group, propagatedspclock));
+	void FmodChannelGroup::add_group(FmodChannelGroup* child_group, bool propagatedspclock) {
+		FMOD_ERR_CHECK(channel_group->addGroup(child_group->channel_group, propagatedspclock));
 	}
 }

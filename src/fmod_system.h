@@ -4,7 +4,7 @@
 #include <fmod.hpp>
 #include <fmod_errors.h>
 #include <godot_cpp/core/class_db.hpp>
-#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include "fmod_utils.hpp"
 
 namespace godot {
@@ -12,8 +12,8 @@ namespace godot {
 	class FmodChannel;
 	class FmodChannelGroup;
 
-	class FmodSystem : public RefCounted {
-		GDCLASS(FmodSystem, RefCounted)
+	class FmodSystem : public Object {
+		GDCLASS(FmodSystem, Object)
 
 	private:
 		FMOD::System* system = nullptr;
@@ -88,7 +88,7 @@ namespace godot {
 			SPEAKERMODE_FORCEINT = 65536
 		};
 
-		enum FmodSoundMode {
+		enum FmodMode {
 			MODE_DEFAULT = 0x00000000,
 			MODE_LOOP_OFF = 0x00000001,
 			MODE_LOOP_NORMAL = 0x00000002,
@@ -120,7 +120,7 @@ namespace godot {
 			MODE_VIRTUAL_PLAYFROMSTART = 0x80000000
 		};
 
-		enum Timeunit {
+		enum FmodTimeunit {
 			TIMEUNIT_MS = 0x00000001,
 			TIMEUNIT_PCM = 0x00000002,
 			TIMEUNIT_PCMBYTES = 0x00000004,
@@ -130,7 +130,7 @@ namespace godot {
 			TIMEUNIT_MODROW = 0x00000200,
 			TIMEUNIT_MODPATTERN = 0x00000400
 		};
-		
+
 		void update();
 
 		void set_output(FmodOutputType output_type);
@@ -145,7 +145,7 @@ namespace godot {
 		void set_network_timeout(int timeout);
 		int64_t get_network_timeout() const;
 
-		Dictionary get_version() const;																		// 获取 Fmod 版本
+		Dictionary get_version() const;																	// 获取 Fmod 版本
 		uint64_t get_output_handle() const;
 		Dictionary get_channels_playing() const;
 		Dictionary get_cpu_usage() const;
@@ -154,13 +154,13 @@ namespace godot {
 			FmodSpeakerMode source_speaker_mode, FmodSpeakerMode target_speaker_mode, int array_length, int hop) const;
 		int64_t get_speaker_mode_channels(FmodSpeakerMode mode) const;
 
-		Ref<FmodSound> create_sound_from_file(const String p_path, unsigned int mode);						// 从文件创建 FmodSound
-		Ref<FmodSound> create_sound_from_memory(const PackedByteArray& data, unsigned int mode);			// 从内存创建 FmodSound
-		Ref<FmodSound> create_sound_from_res(const String p_path, unsigned int mode);						// 从资源文件创建 FmodSound
-		Ref<FmodChannelGroup> create_channel_group(const String& p_name);									// 创建 ChannelGroup
-		Ref<FmodChannel> play_sound(
-			Ref<FmodSound> sound, Ref<FmodChannelGroup> channel_group, bool paused = false);				// 创建 FmodChannel
-		Ref<FmodChannelGroup> get_master_channel_group();													// 获取所有声音最终路由到的主通道组
+		FmodSound* create_sound_from_file(const String p_path, unsigned int mode);						// 从文件创建 FmodSound
+		FmodSound* create_sound_from_memory(const PackedByteArray& data, unsigned int mode);			// 从内存创建 FmodSound
+		FmodSound* create_sound_from_res(const String p_path, unsigned int mode);						// 从资源文件创建 FmodSound
+		FmodChannelGroup* create_channel_group(const String& p_name);								// 创建 ChannelGroup
+		FmodChannel* play_sound(
+			FmodSound* sound, FmodChannelGroup* channel_group, bool paused = false);				// 创建 FmodChannel
+		FmodChannelGroup* get_master_channel_group();												// 获取所有声音最终路由到的主通道组
 		
 	};
 }
@@ -168,8 +168,8 @@ namespace godot {
 VARIANT_ENUM_CAST(FmodSystem::FmodInitFlags);
 VARIANT_ENUM_CAST(FmodSystem::FmodOutputType);
 VARIANT_ENUM_CAST(FmodSystem::FmodSpeakerMode);
-VARIANT_ENUM_CAST(FmodSystem::FmodSoundMode);
-VARIANT_ENUM_CAST(FmodSystem::Timeunit);
+VARIANT_ENUM_CAST(FmodSystem::FmodMode);
+VARIANT_ENUM_CAST(FmodSystem::FmodTimeunit);
 
 #endif // !FMOD_SYSTEM_H
 

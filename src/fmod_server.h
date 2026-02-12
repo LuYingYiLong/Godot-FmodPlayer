@@ -7,6 +7,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/performance.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 #include "fmod_system.h"
 
 namespace godot {
@@ -36,12 +37,12 @@ namespace godot {
 		FmodServer();
 		~FmodServer();
 
-		static Ref<FmodSystem> main_system;
+		static FmodSystem* main_system;
 
 		static FmodServer* get_singleton();
 
-		static Ref<FmodSystem> get_main_system();
-		static Ref<FmodChannelGroup> get_master_channel_group();
+		static FmodSystem* get_main_system();
+		static FmodChannelGroup* get_master_channel_group();
 	};
 }
 

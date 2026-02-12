@@ -1,8 +1,10 @@
+Timer
+FmodSoundEmiter
+GPUParticles2D
 AudioStreamPlayer
 TextureRect
 VBoxContainer
 PanelContainer
-FmodAudioPlayer
 Button
 Label
 Control

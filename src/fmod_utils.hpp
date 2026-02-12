@@ -8,15 +8,15 @@
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#define FMOD_CHECK(result)									                    \
-    do {													                    \
-        FMOD_RESULT _r = (result);							                    \
-        if (_r != FMOD_OK) {								                    \
-            godot::UtilityFunctions::push_error(			                    \
-                "FMOD Error at ", __FILE__, ":", __LINE__,                      \
-                " - ", FMOD_ErrorString(_r)					                    \
-            );												                    \
-        }													                    \
+#define FMOD_ERR_CHECK(result)                                                  \
+    do {                                                                        \
+        FMOD_RESULT _r = (result);                                              \
+        if (_r != FMOD_OK) {                                                    \
+            godot::UtilityFunctions::push_error(                                \
+                "FMOD Error at ", __FUNCTION__, " ", __FILE__, ":", __LINE__,   \
+                " - ", FMOD_ErrorString(_r)                                     \
+            );                                                                  \
+        }                                                                       \
     } while(0)
 
 #define FMOD_CHECK_ERR(result) FmodSystem::_check_error(result)

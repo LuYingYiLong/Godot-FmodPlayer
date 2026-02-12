@@ -2,12 +2,10 @@
 #include "fmod_channel_group.h"
 #include "fmod_server.h"
 #include "fmod_sound.h"
-#include <godot_cpp/classes/project_settings.hpp>
-#include <string>
 
 namespace godot {
 	FmodServer* FmodServer::singleton = nullptr;
-	Ref<FmodSystem> FmodServer::main_system;
+	FmodSystem* FmodServer::main_system = nullptr;
 
 	void FmodServer::_bind_methods() {
 		ClassDB::bind_method(D_METHOD("_connect_update"), &FmodServer::_connect_update);
@@ -20,9 +18,9 @@ namespace godot {
 		ERR_FAIL_COND(singleton != nullptr);
 		singleton = this;
 
-		main_system.instantiate();
-		if (main_system.is_null()) {
-			UtilityFunctions::push_error("Failed to init main syst!");
+		main_system = memnew(FmodSystem);
+		if (!main_system) {
+			UtilityFunctions::push_error("Failed to init main system!");
 			return;
 		}
 		UtilityFunctions::print("    _____                    _ ____  _                       ");
@@ -31,12 +29,13 @@ namespace godot {
 		UtilityFunctions::print("   |  _|| | | | | | (_) | (_| |  __/| | (_| | |_| |  __/ |   ");
 		UtilityFunctions::print("   |_|  |_| |_| |_|\\___/ \\__,_|_|   |_|\\__,_|\\__, |\\___|_|   ");
 		UtilityFunctions::print("                                             |___/           ");
+
 		Dictionary version = main_system->get_version();
 		UtilityFunctions::print_rich(
 			"[b][color=BLACK][bgcolor=WHITE]Fmod Completed.\tFmod Version: ", 
-			version.get("version", -1), 
+			version.get("version", "Unknow"),
 			"\tFmod Build Number: ",
-			version.get("build_number", -1), 
+			version.get("build_number", "Unknow"),
 			"[/bgcolor][/color][/b]"
 		);
 
@@ -58,6 +57,11 @@ namespace godot {
 	FmodServer::~FmodServer() {
 		ERR_FAIL_COND(singleton != this);
 		singleton = nullptr;
+		// 释放 FmodSystem
+		if (main_system) {
+			memdelete(main_system);
+			main_system = nullptr;
+		}
 
 		// 注销自定义监视器
 		Performance* perf = Performance::get_singleton();
@@ -102,11 +106,11 @@ namespace godot {
 		main_system->update();
 	}
 
-	Ref<FmodSystem> FmodServer::get_main_system() {
+	FmodSystem* FmodServer::get_main_system() {
 		return main_system;
 	}
 
-	Ref<FmodChannelGroup> FmodServer::get_master_channel_group() {
+	FmodChannelGroup* FmodServer::get_master_channel_group() {
 		return main_system->get_master_channel_group();
 	}
 

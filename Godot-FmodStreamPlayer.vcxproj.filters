@@ -27,7 +27,7 @@
     <ClInclude Include="src\fmod_server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\fmod_audio_player.h">
+    <ClInclude Include="src\fmod_audio_stream_player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\fmod_sound.h">
@@ -65,7 +65,7 @@
     <ClCompile Include="src\fmod_server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\fmod_audio_player.cpp">
+    <ClCompile Include="src\fmod_audio_stream_player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\fmod_sound.cpp">

@@ -19,11 +19,11 @@ namespace godot {
 		FmodAudio();
 		~FmodAudio();
 
-        Ref<FmodSound> sound;
+		FmodSound* sound = nullptr;
         String file_path;
 
         double get_length() const;
-        Ref<FmodSound> get_sound() const;
+        FmodSound* get_sound() const;
 
 		virtual void set_file_path(const String& p_path) { file_path = p_path; };
 		String get_file_path() const;

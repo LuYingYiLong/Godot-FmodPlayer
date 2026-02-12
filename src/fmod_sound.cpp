@@ -12,18 +12,18 @@ namespace godot {
 
 	FmodSound::~FmodSound() {
 		if (sound) {
-			FMOD_CHECK(sound->release());
+			FMOD_ERR_CHECK(sound->release());
 			sound = nullptr;
 		}
 	}
 
-	Ref<FmodSound> FmodSound::load_from_file(const String& p_path) {
+	FmodSound* FmodSound::load_from_file(const String& p_path) {
 		return FmodServer::get_main_system()->create_sound_from_file(p_path, FmodSystem::MODE_DEFAULT);
 	}
 
 	double FmodSound::get_length() const {
 		unsigned int length = 0;
-        FMOD_CHECK(sound->getLength(&length, FMOD_TIMEUNIT_MS));
+        FMOD_ERR_CHECK(sound->getLength(&length, FMOD_TIMEUNIT_MS));
         return (double)length / 1000.0;
 	}
 }

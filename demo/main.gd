@@ -13,13 +13,14 @@ var channel_group: FmodChannelGroup
 var sound: FmodSound
 
 @onready var label: Label = %Label
+@onready var fmod_sound_emiter: FmodSoundEmiter = %FmodSoundEmiter
 
-func _ready() -> void:
-	system = FmodServer.get_main_system()
-	channel_group = system.get_master_channel_group()
-	system.set_network_proxy("127.0.0.1:9264")
-	print("Current proxy: ", system.get_network_proxy())
-	print(system.get_file_usage())
+#func _ready() -> void:
+	#system = FmodServer.get_main_system()
+	#channel_group = system.get_master_channel_group()
+	#system.set_network_proxy("127.0.0.1:9264")
+	#print("Current proxy: ", system.get_network_proxy())
+	#print(system.get_file_usage())
 
 func _play_sound() -> void:
 	## 使用底层播放音频
@@ -38,3 +39,6 @@ func _process(_delta: float) -> void:
 	if (Engine.is_editor_hint()): return
 	@warning_ignore("narrowing_conversion")
 	label.text = "RAM: %s" %String.humanize_size(Performance.get_monitor(Performance.MEMORY_STATIC))
+
+func _on_timer_timeout() -> void:
+	fmod_sound_emiter.emit()

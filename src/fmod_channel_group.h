@@ -2,13 +2,13 @@
 #define FMOD_CHANNEL_GROUP_H
 
 #include <fmod.hpp>
-#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include "fmod_system.h"
 
 namespace godot {
-	class FmodChannelGroup : public RefCounted {
-		GDCLASS(FmodChannelGroup, RefCounted)
+	class FmodChannelGroup : public Object {
+		GDCLASS(FmodChannelGroup, Object)
 
 	private:
 
@@ -21,7 +21,7 @@ namespace godot {
 
 		FMOD::ChannelGroup* channel_group = nullptr;
 
-		void add_group(Ref<FmodChannelGroup> channel_group, bool propagatedspclock = true);
+		void add_group(FmodChannelGroup* channel_group, bool propagatedspclock = true);
 	};
 }
 

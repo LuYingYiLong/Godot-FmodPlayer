@@ -9,20 +9,21 @@ namespace godot {
 		ADD_PROPERTY(PropertyInfo(Variant::STRING, "file_path", PROPERTY_HINT_FILE_PATH), "set_file_path", "get_file_path");
 	}
 
-	FmodAudio::FmodAudio() {
-
-	}
+	FmodAudio::FmodAudio() {}
 
 	FmodAudio::~FmodAudio() {
-
+		if (sound) {
+			memdelete(sound);
+			sound = nullptr;
+		}
 	}
 
 	double FmodAudio::get_length() const {
-        return sound->get_length();
+		return sound->get_length();
 	}
 
-	Ref<FmodSound> FmodAudio::get_sound() const {
-        return sound;
+	FmodSound* FmodAudio::get_sound() const {
+		return sound;
 	}
 
 	String FmodAudio::get_file_path() const {

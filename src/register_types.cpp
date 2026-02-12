@@ -3,17 +3,17 @@
 #include "fmod_audio.h"
 #include "fmod_audio_sample.h"
 #include "fmod_audio_stream.h"
+#include "fmod_audio_stream_player.h"
 #include "fmod_channel.h"
 #include "fmod_channel_group.h"
 #include "fmod_sound.h"
-#include "fmod_audio_player.h"
+#include "fmod_sound_emiter.h"
 #include "fmod_server.h"
 #include "fmod_system.h"
 
 #include <gdextension_interface.h>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/godot.hpp>
 
 using namespace godot;
@@ -25,29 +25,20 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
 		return;
 	}
 
-	GDREGISTER_ABSTRACT_CLASS(FmodAudio);
-	GDREGISTER_CLASS(FmodAudioSample);
-	GDREGISTER_CLASS(FmodAudioStream);
 	GDREGISTER_CLASS(FmodChannel);
 	GDREGISTER_CLASS(FmodChannelGroup);
 	GDREGISTER_CLASS(FmodSound);
-	GDREGISTER_CLASS(FmodAudioPlayer);
-	GDREGISTER_CLASS(FmodServer);
 	GDREGISTER_CLASS(FmodSystem);
+
+	GDREGISTER_ABSTRACT_CLASS(FmodAudio);
+	GDREGISTER_CLASS(FmodAudioSample);
+	GDREGISTER_CLASS(FmodAudioStream);
+	GDREGISTER_CLASS(FmodAudioStreamPlayer);
+	GDREGISTER_CLASS(FmodSoundEmiter);
+
+	GDREGISTER_CLASS(FmodServer);
 	fmod_server_instance = memnew(FmodServer);												// 初始化 FmodServer
 	Engine::get_singleton()->register_singleton("FmodServer", FmodServer::get_singleton());	// 注册进 Engine 单例
-
-	// ProjectSettings* ps = ProjectSettings::get_singleton();
-	// if (ps) {
-	// 	if (!ps->has_setting("fmod/maxchannels")) {
-	// 		ps->set_setting("fmod/maxchannels", "Max Channels");
-	// 		ps->set_initial_value("fmod/maxchannels", 32);
-	// 	}
-	// 	if (!ps->has_setting("fmod/stream_from_update")) {
-	// 		ps->set_setting("fmod/stream_from_update", "Max Channels");
-	// 		ps->set_initial_value("fmod/stream_from_update", 32);
-	// 	}
-	// }
 }
 
 void uninitialize_example_module(ModuleInitializationLevel p_level) {

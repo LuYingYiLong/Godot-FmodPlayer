@@ -3,13 +3,13 @@
 
 #include "fmod_system.h"
 #include <fmod.hpp>
-#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-	class FmodChannel : public RefCounted {
-		GDCLASS(FmodChannel, RefCounted)
+	class FmodChannel : public Object {
+		GDCLASS(FmodChannel, Object)
 
 	private:
 
@@ -22,6 +22,8 @@ namespace godot {
 
 		FMOD::Channel* channel = nullptr;
 
+		bool auto_free = false;
+
 		void setup(FMOD::Channel* p_channel);
 
 		void set_paused(bool paused);
@@ -33,8 +35,8 @@ namespace godot {
 		void set_pitch(float pitch);
 		float get_pitch() const;
 		
-		void set_position(int position, FmodSystem::Timeunit timeunit = FmodSystem::TIMEUNIT_MS);
-		int get_position(FmodSystem::Timeunit timeunit = FmodSystem::TIMEUNIT_MS) const;
+		void set_position(int position, FmodSystem::FmodTimeunit timeunit = FmodSystem::TIMEUNIT_MS);
+		int get_position(FmodSystem::FmodTimeunit timeunit = FmodSystem::TIMEUNIT_MS) const;
 
 		// 回调设置方法
 		void set_callback();

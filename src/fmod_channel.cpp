@@ -21,7 +21,7 @@ namespace godot {
 	}
 
 	FmodChannel::FmodChannel() {
-
+	
 	}
 
 	FmodChannel::~FmodChannel() {
@@ -49,42 +49,42 @@ namespace godot {
 	}
 
 	void FmodChannel::set_paused(bool paused) {
-		FMOD_CHECK(channel->setPaused(paused));
+		FMOD_ERR_CHECK(channel->setPaused(paused));
 	}
 
 	bool FmodChannel::get_paused() const {
 		bool paused;
-		FMOD_CHECK(channel->getPaused(&paused));
+		FMOD_ERR_CHECK(channel->getPaused(&paused));
 		return paused;
 	}
 
 	void FmodChannel::set_volume(float volume) {
-		FMOD_CHECK(channel->setVolume(volume));
+		FMOD_ERR_CHECK(channel->setVolume(volume));
 	}
 
 	float FmodChannel::get_volume() const {
 		float volume;
-		FMOD_CHECK(channel->getVolume(&volume));
+		FMOD_ERR_CHECK(channel->getVolume(&volume));
 		return volume;
 	}
 	
 	void FmodChannel::set_pitch(float pitch) {
-		FMOD_CHECK(channel->setPitch(pitch));
+		FMOD_ERR_CHECK(channel->setPitch(pitch));
 	}
 
 	float FmodChannel::get_pitch() const {
 		float pitch;
-		FMOD_CHECK(channel->getPitch(&pitch));
+		FMOD_ERR_CHECK(channel->getPitch(&pitch));
 		return pitch;
 	}
 		
-	void FmodChannel::set_position(int position, FmodSystem::Timeunit timeunit) {
-		FMOD_CHECK(channel->setPosition(position, timeunit));
+	void FmodChannel::set_position(int position, FmodSystem::FmodTimeunit timeunit) {
+		FMOD_ERR_CHECK(channel->setPosition(position, timeunit));
 	}
 
-	int FmodChannel::get_position(FmodSystem::Timeunit timeunit) const {
+	int FmodChannel::get_position(FmodSystem::FmodTimeunit timeunit) const {
 		unsigned int position;
-		FMOD_CHECK(channel->getPosition(&position, timeunit));
+		FMOD_ERR_CHECK(channel->getPosition(&position, timeunit));
 		return position;
 	}
 
@@ -140,12 +140,14 @@ FMOD_RESULT F_CALL fmod_channel_control_callback(
 		return FMOD_OK;
 	}
 	// 转换为 FmodChannel 对象
-	godot::Ref<godot::FmodChannel> channel = static_cast<godot::FmodChannel*>(userdata);
+	godot::FmodChannel* channel = static_cast<godot::FmodChannel*>(userdata);
 
 	// 在这里处理所有回调类型
 	switch (callbacktype) {
 	case FMOD_CHANNELCONTROL_CALLBACK_END:
 		channel->emit_signal("ended");
+		if (channel->auto_free) { godot::memdelete(channel); godot::UtilityFunctions::print("free!"); };
+		channel = nullptr;
 		break;
 	}
 	return FMOD_OK;
