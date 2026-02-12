@@ -35,12 +35,6 @@ namespace godot {
 
 	void FmodChannel::setup(FMOD::Channel* p_channel) {
 		channel = p_channel;
-		
-		if (!get_paused()) {
-			exref = reference();
-			if (!exref) UtilityFunctions::push_error("Reference failed");
-		}
-
 			// 设置用户数据
 		FMOD_RESULT result = channel->setUserData(this);
 		if (result != FMOD_OK) {
@@ -56,9 +50,6 @@ namespace godot {
 
 	void FmodChannel::set_paused(bool paused) {
 		FMOD_CHECK(channel->setPaused(paused));
-
-		if (paused && exref) exref = false;
-		else if (!paused && !exref) exref = true;
 	}
 
 	bool FmodChannel::get_paused() const {
@@ -155,14 +146,7 @@ FMOD_RESULT F_CALL fmod_channel_control_callback(
 	switch (callbacktype) {
 	case FMOD_CHANNELCONTROL_CALLBACK_END:
 		channel->emit_signal("ended");
-		if (channel->exref) {
-			FMOD_MODE mode;
-			channel->channel->getMode(&mode);
-			if (mode == godot::FmodSystem::MODE_LOOP_NORMAL || mode == godot::FmodSystem::MODE_LOOP_BIDI)
-			channel->unreference();
-		}
 		break;
-
-		return FMOD_OK;
 	}
+	return FMOD_OK;
 }

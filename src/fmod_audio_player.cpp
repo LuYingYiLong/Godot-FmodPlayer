@@ -16,12 +16,15 @@ namespace godot {
 		internal_channel_group = system->get_master_channel_group();
 	}
 
-	void FmodAudioPlayer::_process(double delta) {
-
+	FmodAudioPlayer::~FmodAudioPlayer() {
+		if (internal_channel.is_valid() && internal_channel->channel) {
+			internal_channel->clear_callback();
+		}
 	}
 
 	void FmodAudioPlayer::set_audio(Ref<FmodAudio> new_audio) {
 		audio = new_audio;
+		set_playing(false);
 		if (audio.is_valid()) {
 			Ref<FmodSystem> system = FmodServer::get_main_system();
 			internal_channel = system->play_sound(audio->sound, internal_channel_group);
@@ -30,7 +33,9 @@ namespace godot {
 				return;
 			}
 		}
-		set_playing(false);
+		else {
+			internal_channel = Ref<FmodChannel>();
+		}
 	}
 
 	Ref<FmodAudio> FmodAudioPlayer::get_audio() const {

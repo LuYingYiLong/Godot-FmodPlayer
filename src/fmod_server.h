@@ -21,6 +21,9 @@ namespace godot {
 		double _get_update() const;
 		double _get_convolution1() const;
 		double _get_convolution2() const;
+		int64_t _get_sample_bytes_read() const;
+		int64_t _get_stream_bytes_read() const;
+		int64_t _get_other_bytes_read() const;
 
 		void _connect_update();
 		void _update_fmod();

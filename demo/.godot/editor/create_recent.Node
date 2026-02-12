@@ -1,6 +1,9 @@
+AudioStreamPlayer
+TextureRect
+VBoxContainer
+PanelContainer
+FmodAudioPlayer
 Button
 Label
 Control
-AudioStreamPlayer
-FmodAudioPlayer
 Node

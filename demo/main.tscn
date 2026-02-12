@@ -1,6 +1,10 @@
 [gd_scene format=3 uid="uid://wv4cdl84i37y"]
 
 [ext_resource type="Script" uid="uid://br0y21ar1nbea" path="res://main.gd" id="1_ig7tw"]
+[ext_resource type="Texture2D" uid="uid://cldqdrtuak4jg" path="res://fmod_player_banner.png" id="2_0xm2m"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0xm2m"]
+bg_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
 
 [node name="Main" type="Node" unique_id=831127703]
 script = ExtResource("1_ig7tw")
@@ -19,15 +23,24 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
 
-[node name="Button" type="Button" parent="." unique_id=1306592260]
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
+[node name="PanelContainer" type="PanelContainer" parent="Control" unique_id=861384987]
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -933.0
-offset_top = -468.0
-grow_horizontal = 0
-grow_vertical = 0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_0xm2m")
 
-[connection signal="pressed" from="Button" to="." method="_play_sound"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Control/PanelContainer" unique_id=370913917]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="Control/PanelContainer/VBoxContainer" unique_id=1614503031]
+layout_mode = 2
+texture = ExtResource("2_0xm2m")
+expand_mode = 5
+stretch_mode = 6
+
+[node name="FmodAudioPlayer" type="FmodAudioPlayer" parent="." unique_id=704848673]
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=651787988]

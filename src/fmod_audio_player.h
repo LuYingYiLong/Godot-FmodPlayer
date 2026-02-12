@@ -19,8 +19,7 @@ namespace godot {
 
 	public:
 		FmodAudioPlayer();
-
-		void _process(double delta) override;
+		~FmodAudioPlayer();
 
 		Ref<FmodSystem> system;
 		Ref<FmodAudio> audio;

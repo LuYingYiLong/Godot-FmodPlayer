@@ -22,8 +22,6 @@ namespace godot {
 
 		FMOD::Channel* channel = nullptr;
 
-		bool exref = false;
-
 		void setup(FMOD::Channel* p_channel);
 
 		void set_paused(bool paused);

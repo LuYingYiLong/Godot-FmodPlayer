@@ -25,17 +25,33 @@ namespace godot {
 			UtilityFunctions::push_error("Failed to init main syst!");
 			return;
 		}
-		UtilityFunctions::print("FMOD Completed.\nFMOD Version: ", main_system->get_version());
+		UtilityFunctions::print("    _____                    _ ____  _                       ");
+		UtilityFunctions::print("   |  ___| __ ___   ___   __| |  _ \\| | __ _ _   _  ___ _ __ ");
+		UtilityFunctions::print("   | |_ | '_ ` _ \\ / _ \\ / _` | |_) | |/ _` | | | |/ _ \\ '__|");
+		UtilityFunctions::print("   |  _|| | | | | | (_) | (_| |  __/| | (_| | |_| |  __/ |   ");
+		UtilityFunctions::print("   |_|  |_| |_| |_|\\___/ \\__,_|_|   |_|\\__,_|\\__, |\\___|_|   ");
+		UtilityFunctions::print("                                             |___/           ");
+		Dictionary version = main_system->get_version();
+		UtilityFunctions::print_rich(
+			"[b][color=BLACK][bgcolor=WHITE]Fmod Completed.\tFmod Version: ", 
+			version.get("version", -1), 
+			"\tFmod Build Number: ",
+			version.get("build_number", -1), 
+			"[/bgcolor][/color][/b]"
+		);
 
 		// 注册自定义监视器
 		Performance* perf = Performance::get_singleton();
 		if (perf) {
-			perf->add_custom_monitor("FMOD/DSP", callable_mp(this, &FmodServer::_get_dsp));
-			perf->add_custom_monitor("FMOD/Stream", callable_mp(this, &FmodServer::_get_stream));
-			perf->add_custom_monitor("FMOD/Geometry", callable_mp(this, &FmodServer::_get_geometry));
-			perf->add_custom_monitor("FMOD/Update", callable_mp(this, &FmodServer::_get_update));
-			perf->add_custom_monitor("FMOD/Convolution1", callable_mp(this, &FmodServer::_get_convolution1));
-			perf->add_custom_monitor("FMOD/Convolution2", callable_mp(this, &FmodServer::_get_convolution2));
+			perf->add_custom_monitor("FmodCPUUsage/DSP", callable_mp(this, &FmodServer::_get_dsp));
+			perf->add_custom_monitor("FmodCPUUsage/Stream", callable_mp(this, &FmodServer::_get_stream));
+			perf->add_custom_monitor("FmodCPUUsage/Geometry", callable_mp(this, &FmodServer::_get_geometry));
+			perf->add_custom_monitor("FmodCPUUsage/Update", callable_mp(this, &FmodServer::_get_update));
+			perf->add_custom_monitor("FmodCPUUsage/Convolution1", callable_mp(this, &FmodServer::_get_convolution1));
+			perf->add_custom_monitor("FmodCPUUsage/Convolution2", callable_mp(this, &FmodServer::_get_convolution2));
+			perf->add_custom_monitor("FmodFileUsage/SampleBytesRead", callable_mp(this, &FmodServer::_get_sample_bytes_read));
+			perf->add_custom_monitor("FmodFileUsage/StreamBytesRead", callable_mp(this, &FmodServer::_get_stream_bytes_read));
+			perf->add_custom_monitor("FmodFileUsage/OtherBytesRead", callable_mp(this, &FmodServer::_get_other_bytes_read));
 		}
 	}
 
@@ -46,12 +62,15 @@ namespace godot {
 		// 注销自定义监视器
 		Performance* perf = Performance::get_singleton();
 		if (perf) {
-			perf->remove_custom_monitor("FMOD/DSP");
-			perf->remove_custom_monitor("FMOD/Stream");
-			perf->remove_custom_monitor("FMOD/Geometry");
-			perf->remove_custom_monitor("FMOD/Update");
-			perf->remove_custom_monitor("FMOD/Convolution1");
-			perf->remove_custom_monitor("FMOD/Convolution2");
+			perf->remove_custom_monitor("FmodCPUUsage/DSP");
+			perf->remove_custom_monitor("FmodCPUUsage/Stream");
+			perf->remove_custom_monitor("FmodCPUUsage/Geometry");
+			perf->remove_custom_monitor("FmodCPUUsage/Update");
+			perf->remove_custom_monitor("FmodCPUUsage/Convolution1");
+			perf->remove_custom_monitor("FmodCPUUsage/Convolution2");
+			perf->remove_custom_monitor("FmodFileUsage/SampleBytesRead");
+			perf->remove_custom_monitor("FmodFileUsage/StreamBytesRead");
+			perf->remove_custom_monitor("FmodFileUsage/OtherBytesRead");
 		}
 	}
 
@@ -119,5 +138,20 @@ namespace godot {
 	double FmodServer::_get_convolution2() const {
 		double convolution2 = main_system->get_cpu_usage().get("convolution2", 0.0);
 		return convolution2;
+	}
+
+	int64_t FmodServer::_get_sample_bytes_read() const {
+		int64_t sample_bytes_read = main_system->get_file_usage().get("sample_bytes_read", 0);
+		return sample_bytes_read;
+	}
+
+	int64_t FmodServer::_get_stream_bytes_read() const {
+		int64_t stream_bytes_read = main_system->get_file_usage().get("stream_bytes_read", 0);
+		return stream_bytes_read;
+	}
+
+	int64_t FmodServer::_get_other_bytes_read() const {
+		int64_t other_bytes_read = main_system->get_file_usage().get("other_bytes_read", 0);
+		return other_bytes_read;
 	}
 }

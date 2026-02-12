@@ -44,6 +44,50 @@ namespace godot {
 			INIT_MEMORY_TRACKING = 0x00400000
 		};
 
+		enum FmodOutputType {
+			OUTPUTTYPE_AUTODETECT,
+			OUTPUTTYPE_UNKNOWN,
+			OUTPUTTYPE_NOSOUND,
+			OUTPUTTYPE_WAVWRITER,
+			OUTPUTTYPE_NOSOUND_NRT,
+			OUTPUTTYPE_WAVWRITER_NRT,
+			OUTPUTTYPE_WASAPI,
+			OUTPUTTYPE_ASIO,
+			OUTPUTTYPE_PULSEAUDIO,
+			OUTPUTTYPE_ALSA,
+			OUTPUTTYPE_COREAUDIO,
+			OUTPUTTYPE_AUDIOTRACK,
+			OUTPUTTYPE_OPENSL,
+			OUTPUTTYPE_AUDIOOUT,
+			OUTPUTTYPE_AUDIO3D,
+			OUTPUTTYPE_WEBAUDIO,
+			OUTPUTTYPE_NNAUDIO,
+			OUTPUTTYPE_WINSONIC,
+			OUTPUTTYPE_AAUDIO,
+			OUTPUTTYPE_AUDIOWORKLET,
+			OUTPUTTYPE_PHASE,
+			OUTPUTTYPE_OHAUDIO,
+
+			OUTPUTTYPE_MAX,
+			OUTPUTTYPE_FORCEINT = 65536
+		};
+
+		enum FmodSpeakerMode
+		{
+			SPEAKERMODE_DEFAULT,
+			SPEAKERMODE_RAW,
+			SPEAKERMODE_MONO,
+			SPEAKERMODE_STEREO,
+			SPEAKERMODE_QUAD,
+			SPEAKERMODE_SURROUND,
+			SPEAKERMODE_5POINT1,
+			SPEAKERMODE_7POINT1,
+			SPEAKERMODE_7POINT1POINT4,
+
+			SPEAKERMODE_MAX,
+			SPEAKERMODE_FORCEINT = 65536
+		};
+
 		enum FmodSoundMode {
 			MODE_DEFAULT = 0x00000000,
 			MODE_LOOP_OFF = 0x00000001,
@@ -89,20 +133,41 @@ namespace godot {
 		
 		void update();
 
-		Dictionary get_version();																					// 获取 Fmod 版本
+		void set_output(FmodOutputType output_type);
+		FmodOutputType get_output() const;
+		int64_t get_num_drivers() const;
+		Dictionary get_driver_info(int id) const;
+		void set_driver(int driver);
+		int64_t get_driver() const;
+
+		void set_network_proxy(const String& p_proxy);
+		String get_network_proxy() const;
+		void set_network_timeout(int timeout);
+		int64_t get_network_timeout() const;
+
+		Dictionary get_version() const;																		// 获取 Fmod 版本
+		uint64_t get_output_handle() const;
+		Dictionary get_channels_playing() const;
+		Dictionary get_cpu_usage() const;
+		Dictionary get_file_usage() const;
+		PackedFloat32Array get_default_mix_matrix(
+			FmodSpeakerMode source_speaker_mode, FmodSpeakerMode target_speaker_mode, int array_length, int hop) const;
+		int64_t get_speaker_mode_channels(FmodSpeakerMode mode) const;
 
 		Ref<FmodSound> create_sound_from_file(const String p_path, unsigned int mode);						// 从文件创建 FmodSound
 		Ref<FmodSound> create_sound_from_memory(const PackedByteArray& data, unsigned int mode);			// 从内存创建 FmodSound
 		Ref<FmodSound> create_sound_from_res(const String p_path, unsigned int mode);						// 从资源文件创建 FmodSound
 		Ref<FmodChannelGroup> create_channel_group(const String& p_name);									// 创建 ChannelGroup
-		Ref<FmodChannel> play_sound(Ref<FmodSound> sound, Ref<FmodChannelGroup> channel_group, bool paused = false); // 创建 FmodChannel
+		Ref<FmodChannel> play_sound(
+			Ref<FmodSound> sound, Ref<FmodChannelGroup> channel_group, bool paused = false);				// 创建 FmodChannel
 		Ref<FmodChannelGroup> get_master_channel_group();													// 获取所有声音最终路由到的主通道组
 		
-		Dictionary get_cpu_usage();
 	};
 }
 
 VARIANT_ENUM_CAST(FmodSystem::FmodInitFlags);
+VARIANT_ENUM_CAST(FmodSystem::FmodOutputType);
+VARIANT_ENUM_CAST(FmodSystem::FmodSpeakerMode);
 VARIANT_ENUM_CAST(FmodSystem::FmodSoundMode);
 VARIANT_ENUM_CAST(FmodSystem::Timeunit);
 

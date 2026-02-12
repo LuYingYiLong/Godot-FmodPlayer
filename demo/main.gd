@@ -14,14 +14,19 @@ var sound: FmodSound
 
 @onready var label: Label = %Label
 
+func _ready() -> void:
+	system = FmodServer.get_main_system()
+	channel_group = system.get_master_channel_group()
+	system.set_network_proxy("127.0.0.1:9264")
+	print("Current proxy: ", system.get_network_proxy())
+	print(system.get_file_usage())
+
 func _play_sound() -> void:
 	## 使用底层播放音频
-	system = FmodServer.get_main_system()
 	sound = system.create_sound_from_res(
 		"res://Athletics - IV_01.wav",
 		FmodSystem.MODE_LOOP_OFF
 	)
-	channel_group = system.get_master_channel_group()
 	channel = system.play_sound(sound, channel_group, false)
 	#FmodServer.get_main_system().play_sound(sound, channel_group, false)
 	channel.ended.connect(func() -> void:

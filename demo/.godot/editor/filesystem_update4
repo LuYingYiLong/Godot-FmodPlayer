@@ -1,2 +1,3 @@
-res://main.gd
 res://main.tscn
+res://main.gd
+res://new_fmod_audio_stream.tres
