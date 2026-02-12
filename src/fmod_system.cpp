@@ -60,6 +60,7 @@ namespace godot {
 		BIND_ENUM_CONSTANT(TIMEUNIT_MODROW);
 		BIND_ENUM_CONSTANT(TIMEUNIT_MODPATTERN);
 
+		ClassDB::bind_method(D_METHOD("update"), &FmodSystem::update);
 		ClassDB::bind_method(D_METHOD("get_version"), &FmodSystem::get_version);
 		ClassDB::bind_method(D_METHOD("create_sound_from_file", "path", "mode"), &FmodSystem::create_sound_from_file, DEFVAL(MODE_DEFAULT));
 		ClassDB::bind_method(D_METHOD("create_sound_from_memory", "data", "mode"), &FmodSystem::create_sound_from_memory, DEFVAL(MODE_DEFAULT));
@@ -89,14 +90,15 @@ namespace godot {
 	}
 
 	void FmodSystem::update() {
-		system->update();
+		if (system->update() != FMOD_OK)
+			UtilityFunctions::push_error("Fmod Sytem update failed!");;
 	}
 
 	Dictionary FmodSystem::get_version() {
 		ERR_FAIL_COND_V(!system, Dictionary());
 		unsigned int version = 0;
 		unsigned int buildnumber = 0;
-		FMOD_ERR_FAIL_COND_V(system->getVersion(&version, &buildnumber), Dictionary());
+		FMOD_CALL_CHECK_V(system->getVersion(&version, &buildnumber), Dictionary());
 		Dictionary result;
 		result["version"] = version;
 		result["build_number"] = buildnumber;
@@ -120,7 +122,7 @@ namespace godot {
 		Ref<FmodSound> fmod_sound;
 		fmod_sound.instantiate();
 
-		FMOD_ERR_FAIL_COND_V(system->createSound(
+		FMOD_CALL_CHECK_V(system->createSound(
 			path_cstr,
 			mode,
 			nullptr,							// 文件加载不需要 exinfo
@@ -131,7 +133,7 @@ namespace godot {
 	}
 
 	Ref<FmodSound> FmodSystem::create_sound_from_memory(const PackedByteArray& data, unsigned int mode) {
-		ERR_FAIL_COND_V(!system || data.is_empty(), Ref<FmodSound>());
+		ERR_FAIL_COND_V(!system || data.is_empty(), nullptr);
 
 		// 实例化 FmodSound
 		Ref<FmodSound> sound;
@@ -142,12 +144,12 @@ namespace godot {
 		exinfo.length = sound->data.size();
 
 		// 从 FmodSystem 创建音频
-		FMOD_ERR_FAIL_COND_V(system->createSound(
+		FMOD_CALL_CHECK_V(system->createSound(
 			(const char*)sound->data.ptr(),
-			mode,
+			mode |= FMOD_OPENMEMORY,
 			&exinfo,
 			&sound->sound
-		), Ref<FmodSound>());
+		), nullptr);
 
 		return sound;
 	}
@@ -163,7 +165,7 @@ namespace godot {
 		ERR_FAIL_COND_V(data.is_empty(), Ref<FmodSound>());
 
 		// 用内存模式创建 FMOD Sound
-		String extension = p_path.get_extension();
+
 		return create_sound_from_memory(data, mode);
 	}
 
@@ -171,7 +173,7 @@ namespace godot {
 		ERR_FAIL_COND_V(!system, Ref<FmodChannelGroup>());
 		Ref<FmodChannelGroup> channel_group;
 		channel_group.instantiate();
-		FMOD_ERR_FAIL_COND_V(
+		FMOD_CALL_CHECK_V(
 			system->createChannelGroup(p_name.utf8().get_data(), &channel_group->channel_group),
 			Ref<FmodChannelGroup>()
 		);
@@ -183,9 +185,10 @@ namespace godot {
 			!system || sound.is_null() || !sound->sound || channel_group.is_null() || !channel_group->channel_group,
 			Ref<FmodChannel>()
 		);
+
 		// 创建 channel（不 instantiate，等 playSound 成功后再创建）
 		FMOD::Channel* fmod_channel = nullptr;
-		FMOD_ERR_FAIL_COND_V(system->playSound(
+		FMOD_CALL_CHECK_V(system->playSound(
 			sound->sound, 
 			channel_group->channel_group, 
 			paused, 
@@ -201,14 +204,14 @@ namespace godot {
 		// 现在创建 Godot 包装对象
 		Ref<FmodChannel> channel;
 		channel.instantiate();
-		channel->channel = fmod_channel;
+		channel->setup(fmod_channel);
 		return channel;
 	}
 
 	Ref<FmodChannelGroup> FmodSystem::get_master_channel_group() {
 		Ref<FmodChannelGroup> channel_group;
 		channel_group.instantiate();
-		FMOD_ERR_FAIL_COND_V(system->getMasterChannelGroup(&channel_group->channel_group), Ref<FmodChannelGroup>());
+		FMOD_CALL_CHECK_V(system->getMasterChannelGroup(&channel_group->channel_group), Ref<FmodChannelGroup>());
 		return channel_group;
 	}
 

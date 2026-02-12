@@ -10,10 +10,10 @@ namespace godot {
 	Ref<FmodSystem> FmodServer::main_system;
 
 	void FmodServer::_bind_methods() {
+		ClassDB::bind_method(D_METHOD("_connect_update"), &FmodServer::_connect_update);
 		ClassDB::bind_static_method("FmodServer", D_METHOD("get_singleton"), &FmodServer::get_singleton);
 		ClassDB::bind_static_method("FmodServer", D_METHOD("get_main_system"), &FmodServer::get_main_system);
 		ClassDB::bind_static_method("FmodServer", D_METHOD("get_master_channel_group"), &FmodServer::get_master_channel_group);
-		
 	}
 
 	FmodServer::FmodServer() {
@@ -55,13 +55,32 @@ namespace godot {
 		}
 	}
 
+	void FmodServer::_notification(int p_what) {
+		switch (p_what) {
+		case NOTIFICATION_POSTINITIALIZE: {
+			// 延迟调用，等主循环准备好
+			call_deferred("_connect_update");
+		} break;
+		}
+	}
+
 	FmodServer* FmodServer::get_singleton() {
 		return singleton;
 	}
 
-	bool FmodServer::_process(double p_delta) {
+	void FmodServer::_connect_update() {
+		// 连接 process_frame 驱动 FmodSystem update
+		SceneTree* tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+		if (tree) {
+			tree->connect("process_frame", callable_mp(get_singleton(), &FmodServer::_update_fmod));
+		}
+		else {
+			UtilityFunctions::push_error("Failed to get SceneTree!");
+		}
+	}
+
+	void FmodServer::_update_fmod() {
 		main_system->update();
-		return false;
 	}
 
 	Ref<FmodSystem> FmodServer::get_main_system() {

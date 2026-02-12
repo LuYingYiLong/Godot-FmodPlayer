@@ -21,11 +21,7 @@
    - Extract the `addons/fmod_player` folder into your Godot project's `/addons` directory
    - The structure should look like: `res://addons/fmod_player/`
 
-3. **Enable the Plugin**
-   - Open Godot Editor: `Project > Project Settings > Plugins`
-   - Find **FmodPlayer** and check the **Enable** checkbox
-
-4. **Setup FMOD Libraries**
+3. **Setup FMOD Libraries**
    - Download FMOD Core API from [fmod.com](https://www.fmod.com/download)
    - Place the required libraries in the appropriate platform folders:
      - Windows: `addons/fmod_player/libs/windows/`

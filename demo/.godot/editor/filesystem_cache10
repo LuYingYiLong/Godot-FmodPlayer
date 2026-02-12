@@ -1,0 +1,14 @@
+63f7b34db8d8cdea90c76aacccf841ec
+::res://::1770886944
+Approaching Nirvana - Frontier.mp3::AudioStreamMP3::8479071175945902534::1770790351::1770790353::1::::<><><>0<>0<>5e3296b695fccfb5d2514408afc6a802<>res://.godot/imported/Approaching Nirvana - Frontier.mp3-e9ac8310f942d7951ee2f8ac9356ac41.mp3str::
+Athletics - IV_01.wav::AudioStreamWAV::2768753438297633932::1770881278::1770881279::1::::<><><>0<>0<>2f27a746c84f584809aee07b7bce6823<>res://.godot/imported/Athletics - IV_01.wav-299cb8ed63e53a937dcf463fb09aed59.sample::
+hit.wav::AudioStreamWAV::6451923953258641534::1770808118::1770808120::1::::<><><>0<>0<>ef8a550447b64fbd0d39e696141725f9<>res://.godot/imported/hit.wav-11fbf281db96cf04a6ea741a364b0852.sample::
+icon.svg::CompressedTexture2D::9169635615099655181::1770740702::1770740710::1::::<><><>0<>0<>bfa6ea471f61c2d07d500aebc2454568<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+main.gd::GDScript::3632747260067736244::1770886640::0::1::::<>Node<><>0<>1<><>::
+main.tscn::PackedScene::1589271033351374648::1770886919::0::1::::<><><>0<>0<><>::uid://br0y21ar1nbea::::res://main.gd
+new_fmod_audio_sample.tres::FmodAudioSample::1262017257460924447::1770878849::0::1::::<><><>0<>0<><>::
+new_fmod_audio_stream.tres::FmodAudioStream::6710422515949895544::1770878849::0::1::::<><><>0<>0<><>::
+::res://bin/::1770886940
+fmod_player.gdextension::GDExtension::8251924288101934282::1770880883::0::1::::<><><>0<>0<><>::
+::res://bin/icons/::1770875224
+FmodAudioPlayer.svg::CompressedTexture2D::2283814310760386541::1770875224::1770875224::1::::<><><>0<>0<>a1805e758e505b972a15148410cf13c8<>res://.godot/imported/FmodAudioPlayer.svg-773047338e225c9fd9a04f37f394f268.ctex::

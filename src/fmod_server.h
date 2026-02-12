@@ -1,16 +1,17 @@
 #ifndef FMOD_SERVER_H
 #define FMOD_SERVER_H
 
-#include <godot_cpp/classes/main_loop.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/performance.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 #include "fmod_system.h"
 
 namespace godot {
-	class FmodServer : public MainLoop {
-		GDCLASS(FmodServer, MainLoop)
+	class FmodServer : public Object {
+		GDCLASS(FmodServer, Object)
 		static FmodServer* singleton;
 
 	private:
@@ -21,8 +22,12 @@ namespace godot {
 		double _get_convolution1() const;
 		double _get_convolution2() const;
 
+		void _connect_update();
+		void _update_fmod();
+
 	protected:
 		static void _bind_methods();
+		void _notification(int p_what);
 
 	public:
 		FmodServer();
@@ -31,8 +36,6 @@ namespace godot {
 		static Ref<FmodSystem> main_system;
 
 		static FmodServer* get_singleton();
-
-		bool _process(double p_delta) override;
 
 		static Ref<FmodSystem> get_main_system();
 		static Ref<FmodChannelGroup> get_master_channel_group();

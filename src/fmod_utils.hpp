@@ -21,15 +21,15 @@
 
 #define FMOD_CHECK_ERR(result) FmodSystem::_check_error(result)
 
-#define FMOD_ERR_FAIL_COND_V(m_result, m_retval)                                \
+#define FMOD_CALL_CHECK_V(fmod_call, retval)                                    \
     do {                                                                        \
-        FMOD_RESULT _r = (m_result);                                            \
+        FMOD_RESULT _r = (fmod_call);                                           \
         if (_r != FMOD_OK) {                                                    \
             godot::UtilityFunctions::push_error(                                \
                 "FMOD Error at ", __FUNCTION__, " ", __FILE__, ":", __LINE__,   \
                 " - ", FMOD_ErrorString(_r)                                     \
             );                                                                  \
-            return m_retval;                                                    \
+            return retval;                                                      \
         }                                                                       \
     } while(0)
 

@@ -10,7 +10,8 @@ namespace godot {
 	}
 	
 	FmodChannelGroup::~FmodChannelGroup() {
-		FMOD_CHECK(channel_group->release());
+		if (channel_group)
+			channel_group->release();
 	}
 
 	void FmodChannelGroup::add_group(Ref<FmodChannelGroup> child_group, bool propagatedspclock) {
