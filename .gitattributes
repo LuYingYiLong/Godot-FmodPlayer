@@ -66,4 +66,3 @@
 /**             export-ignore
 /demo           !export-ignore
 /demo/bin/      !export-ignore
-/demo/bin/**    !export-ignore
