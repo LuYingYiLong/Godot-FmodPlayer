@@ -131,7 +131,7 @@ namespace godot {
 	FmodSystem::FmodSystem() {
 		system = nullptr;
 		if (FMOD_CHECK_ERR(FMOD::System_Create(&system))) return;
-		if (FMOD_CHECK_ERR(system->init(32, FMOD_INIT_NORMAL, nullptr))) return;
+		if (FMOD_CHECK_ERR(system->init(32, FMOD_INIT_PROFILE_ENABLE, nullptr))) return;
 	}
 
 	FmodSystem::~FmodSystem() {
@@ -283,9 +283,9 @@ namespace godot {
 		long long other_bytes_read = 0;
 		FMOD_CALL_CHECK_V(system->getFileUsage(&sample_bytes_read, &stream_bytes_read, &other_bytes_read), Dictionary());
 		Dictionary result;
-		result["sample_bytes_read"] = sample_bytes_read;
-		result["stream_bytes_read"] = stream_bytes_read;
-		result["other_bytes_read"] = other_bytes_read;
+		result["sample_bytes_read"] = (int64_t)sample_bytes_read;
+		result["stream_bytes_read"] = (int64_t)stream_bytes_read;
+		result["other_bytes_read"] = (int64_t)other_bytes_read;
 		return result;
 	}
 
@@ -439,7 +439,7 @@ namespace godot {
 			nullptr
 		);
 
-		// 创建 channel（不 instantiate，等 playSound 成功后再创建）
+		// 创建 channel
 		FMOD::Channel* fmod_channel = nullptr;
 		FMOD_CALL_CHECK_V(system->playSound(
 			sound->sound,
@@ -463,7 +463,7 @@ namespace godot {
 	FmodChannelGroup* FmodSystem::get_master_channel_group() {
 		FmodChannelGroup* channel_group = memnew(FmodChannelGroup);
 		FMOD_RESULT result = system->getMasterChannelGroup(&channel_group->channel_group);
-		if (result != OK) {
+		if (result != FMOD_OK) {
 			FMOD_ERR_CHECK(result);
 			memdelete(channel_group);
 			channel_group = nullptr;

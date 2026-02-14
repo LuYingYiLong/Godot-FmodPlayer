@@ -23,13 +23,13 @@ namespace godot {
 			UtilityFunctions::push_error("Failed to init main system!");
 			return;
 		}
+
 		UtilityFunctions::print("    _____                    _ ____  _                       ");
 		UtilityFunctions::print("   |  ___| __ ___   ___   __| |  _ \\| | __ _ _   _  ___ _ __ ");
 		UtilityFunctions::print("   | |_ | '_ ` _ \\ / _ \\ / _` | |_) | |/ _` | | | |/ _ \\ '__|");
 		UtilityFunctions::print("   |  _|| | | | | | (_) | (_| |  __/| | (_| | |_| |  __/ |   ");
 		UtilityFunctions::print("   |_|  |_| |_| |_|\\___/ \\__,_|_|   |_|\\__,_|\\__, |\\___|_|   ");
 		UtilityFunctions::print("                                             |___/           ");
-
 		Dictionary version = main_system->get_version();
 		UtilityFunctions::print_rich(
 			"[b][color=BLACK][bgcolor=WHITE]Fmod Completed.\tFmod Version: ", 

@@ -19,15 +19,18 @@
     <Filter Include="Source Files\Resources">
       <UniqueIdentifier>{eff5046d-7f57-4294-9609-a12be4b9eb7a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Nodes">
+      <UniqueIdentifier>{4f609412-dad3-45ab-acb2-f7d36b80bcc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Nodes">
+      <UniqueIdentifier>{568406b4-8e5d-49ef-90ca-7cffc6d78b21}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\register_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\fmod_server.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fmod_audio_stream_player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\fmod_sound.h">
@@ -51,11 +54,14 @@
     <ClInclude Include="src\fmod_utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\fmod_sound_emiter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\fmod_system.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fmod_audio_stream_player.h">
+      <Filter>Header Files\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fmod_audio_sample_emitter.h">
+      <Filter>Header Files\Nodes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -63,9 +69,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\fmod_server.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fmod_audio_stream_player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\fmod_sound.cpp">
@@ -86,11 +89,14 @@
     <ClCompile Include="src\fmod_audio_stream.cpp">
       <Filter>Source Files\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="src\fmod_sound_emiter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\fmod_system.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fmod_audio_stream_player.cpp">
+      <Filter>Source Files\Nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fmod_audio_sample_emiter.cpp">
+      <Filter>Source Files\Nodes</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

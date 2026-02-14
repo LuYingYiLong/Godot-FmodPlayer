@@ -12,6 +12,9 @@ namespace godot {
 
 	private:
 		FmodChannel* internal_channel = nullptr;
+		FmodChannelGroup* internal_channel_group = nullptr;
+
+		void _on_internal_channel_ended();
 
 	protected:
 		static void _bind_methods();
@@ -22,14 +25,17 @@ namespace godot {
 
 		FmodSystem* system = nullptr;
 		Ref<FmodAudioStream> stream;
-		bool playing = false;
 
 		void set_stream(Ref<FmodAudioStream> new_stream);
 		Ref<FmodAudioStream> get_stream() const;
 
-		void play(double from_position = 0.0);
-		void set_playing(bool play);
+		bool playing = false;
+		void play(const double from_position = 0.0);
+		void set_playing(const bool play);
 		bool is_playing() const;
+
+		void set_volume_db(const double new_volume_db);
+		double get_volume_db() const;
 	};
 }
 

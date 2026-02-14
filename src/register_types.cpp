@@ -4,10 +4,10 @@
 #include "fmod_audio_sample.h"
 #include "fmod_audio_stream.h"
 #include "fmod_audio_stream_player.h"
+#include "fmod_audio_sample_emitter.h"
 #include "fmod_channel.h"
 #include "fmod_channel_group.h"
 #include "fmod_sound.h"
-#include "fmod_sound_emiter.h"
 #include "fmod_server.h"
 #include "fmod_system.h"
 
@@ -33,8 +33,9 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_ABSTRACT_CLASS(FmodAudio);
 	GDREGISTER_CLASS(FmodAudioSample);
 	GDREGISTER_CLASS(FmodAudioStream);
+
 	GDREGISTER_CLASS(FmodAudioStreamPlayer);
-	GDREGISTER_CLASS(FmodSoundEmiter);
+	GDREGISTER_CLASS(FmodAudioSampleEmitter);
 
 	GDREGISTER_CLASS(FmodServer);
 	fmod_server_instance = memnew(FmodServer);												// ≥ı ºªØ FmodServer
