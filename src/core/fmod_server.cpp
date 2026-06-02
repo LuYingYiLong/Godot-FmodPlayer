@@ -478,7 +478,6 @@ namespace godot {
 								forward,
 								up
 							);
-							main_system->update();
 						}
 					}
 					
@@ -490,6 +489,7 @@ namespace godot {
 						camera_2d_rot = canvas_transform.get_rotation();
 					}
 
+					main_system->update();
 					return;
 				}
 			}
@@ -508,7 +508,6 @@ namespace godot {
 						forward,
 						up
 					);
-					main_system->update();
 				}
 				else {
 					Camera2D* camera_2d = viewport->get_camera_2d();
@@ -519,6 +518,8 @@ namespace godot {
 				}
 			}
 		}
+
+		main_system->update();
 	}
 
 	Ref<FmodSystem> FmodServer::get_main_system() {

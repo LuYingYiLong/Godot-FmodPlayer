@@ -140,8 +140,8 @@ namespace godot {
 		if (!channel_control) return false;
 		bool isplaying = false;
 		FMOD_RESULT result = channel_control->isPlaying(&isplaying);
-		// FMOD_ERR_INVALID_HANDLE 表示 channel 已停止并失效，这是正常情况
-		if (result == FMOD_ERR_INVALID_HANDLE) {
+		// FMOD_ERR_INVALID_HANDLE / FMOD_ERR_CHANNEL_STOLEN 表示 channel 已停止、失效或被 FMOD 复用，这是正常情况
+		if (result == FMOD_ERR_INVALID_HANDLE || result == FMOD_ERR_CHANNEL_STOLEN) {
 			return false;
 		}
 		FMOD_ERR_CHECK(result);
@@ -150,7 +150,11 @@ namespace godot {
 
 	void FmodChannelControl::stop() {
 		if (!channel_control) return;
-		FMOD_ERR_CHECK(channel_control->stop());
+		FMOD_RESULT result = channel_control->stop();
+		if (result == FMOD_ERR_INVALID_HANDLE || result == FMOD_ERR_CHANNEL_STOLEN) {
+			return;
+		}
+		FMOD_ERR_CHECK(result);
 	}
 
 	void FmodChannelControl::set_paused(bool paused) {
