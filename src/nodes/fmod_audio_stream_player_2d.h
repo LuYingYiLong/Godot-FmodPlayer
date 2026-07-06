@@ -31,6 +31,7 @@ namespace godot {
 
 		void _on_internal_player_finished();
 		void _update_panning();
+		void _sync_process_pause_state();
 
 		static void _listener_changed_callback(void *self) {
 			reinterpret_cast<FmodAudioStreamPlayer2D *>(self)->force_update_panning = true;

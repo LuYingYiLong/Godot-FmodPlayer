@@ -19,6 +19,7 @@ namespace godot {
 	private:
 		FmodAudioStreamPlayerInternal* internal_player = nullptr;
 		void _on_internal_player_finished();
+		void _sync_process_pause_state();
 
 	protected:
 		static void _bind_methods();

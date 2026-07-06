@@ -105,6 +105,12 @@ namespace godot {
 		}
 	}
 
+	void FmodAudioStreamPlayerInternal::_apply_paused_state() {
+		if (channel.is_valid() && channel->channel_control_is_valid()) {
+			channel->set_paused(stream_paused || process_paused);
+		}
+	}
+
 	bool FmodAudioStreamPlayerInternal::handle_channel_ended() {
 		_disconnect_channel();
 		channel.unref();
@@ -165,6 +171,7 @@ namespace godot {
 			channel->set_position(int(p_from_position * 1000.0f));
 			playing = true;
 			stream_paused = false;
+			_apply_paused_state();
 			return true;
 		}
 
@@ -210,9 +217,7 @@ namespace godot {
 	}
 
 	void FmodAudioStreamPlayerInternal::start_prepared_playback() {
-		if (channel.is_valid() && channel->channel_control_is_valid()) {
-			channel->set_paused(false);
-		}
+		_apply_paused_state();
 	}
 
 	void FmodAudioStreamPlayerInternal::stop() {
@@ -245,16 +250,16 @@ namespace godot {
 
 	void FmodAudioStreamPlayerInternal::set_stream_paused(bool p_paused) {
 		stream_paused = p_paused;
-		if (channel.is_valid() && channel->channel_control_is_valid()) {
-			channel->set_paused(p_paused);
-		}
+		_apply_paused_state();
 	}
 
 	bool FmodAudioStreamPlayerInternal::get_stream_paused() const {
-		if (channel.is_valid() && channel->channel_control_is_valid()) {
-			return channel->get_paused();
-		}
 		return stream_paused;
+	}
+
+	void FmodAudioStreamPlayerInternal::set_process_paused(bool p_paused) {
+		process_paused = p_paused;
+		_apply_paused_state();
 	}
 
 	float FmodAudioStreamPlayerInternal::get_playback_position() const {

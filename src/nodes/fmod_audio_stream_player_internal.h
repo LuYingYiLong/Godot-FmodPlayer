@@ -25,6 +25,7 @@ namespace godot {
 		FmodAudioStream::CreateMode playback_mode = FmodAudioStream::MODE_2D;
 		bool playing = false;
 		bool stream_paused = false;
+		bool process_paused = false;
 		bool autoplay = false;
 		bool preload_on_set_stream = false;
 		bool last_channel_created = false;
@@ -39,6 +40,7 @@ namespace godot {
 		void _connect_channel();
 		void _disconnect_channel();
 		void _clear_channel(bool p_stop);
+		void _apply_paused_state();
 
 	public:
 		FmodAudioStreamPlayerInternal();
@@ -62,6 +64,7 @@ namespace godot {
 
 		void set_stream_paused(bool p_paused);
 		bool get_stream_paused() const;
+		void set_process_paused(bool p_paused);
 
 		float get_playback_position() const;
 

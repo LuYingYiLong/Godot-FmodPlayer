@@ -65,9 +65,17 @@ namespace godot {
 	void FmodAudioStreamPlayer::_notification(int p_what) {
 		switch (p_what) {
 			case NOTIFICATION_READY: {
+				_sync_process_pause_state();
 				if (internal_player->is_autoplay_enabled() && internal_player->get_stream().is_valid() && !Engine::get_singleton()->is_editor_hint()) {
 					call_deferred("play");
 				}
+			} break;
+
+			case NOTIFICATION_PAUSED:
+			case NOTIFICATION_UNPAUSED:
+			case NOTIFICATION_DISABLED:
+			case NOTIFICATION_ENABLED: {
+				_sync_process_pause_state();
 			} break;
 
 			case NOTIFICATION_PREDELETE: {
@@ -77,6 +85,12 @@ namespace godot {
 					internal_player = nullptr;
 				}
 			} break;
+		}
+	}
+
+	void FmodAudioStreamPlayer::_sync_process_pause_state() {
+		if (internal_player) {
+			internal_player->set_process_paused(is_inside_tree() && !can_process());
 		}
 	}
 
@@ -117,6 +131,7 @@ namespace godot {
 	}
 
 	void FmodAudioStreamPlayer::play(const float from_position) {
+		_sync_process_pause_state();
 		if (internal_player->prepare_play(from_position)) {
 			internal_player->start_prepared_playback();
 		}
@@ -131,7 +146,11 @@ namespace godot {
 	}
 
 	void FmodAudioStreamPlayer::set_playing(const bool playing) {
-		internal_player->set_playing(playing);
+		if (playing) {
+			play();
+		} else {
+			stop();
+		}
 	}
 
 	bool FmodAudioStreamPlayer::is_playing() const {
