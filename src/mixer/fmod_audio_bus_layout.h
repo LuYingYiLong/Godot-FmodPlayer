@@ -2,8 +2,10 @@
 #define FMOD_AUDIO_BUS_LAYOUT_H
 
 #include "mixer/fmod_audio_bus.h"
+#include <godot_cpp/classes/audio_effect.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/vector.hpp>
 
 namespace godot {
 	class FmodAudioEffect;
@@ -12,14 +14,42 @@ namespace godot {
 		GDCLASS(FmodAudioBusLayout, Resource)
 
 	private:
+		struct AudioServerBusState {
+			StringName name;
+			StringName send;
+			float volume_db = 0.0f;
+			bool mute = false;
+			bool solo = false;
+			bool bypass = false;
+			int effect_count = 0;
+		};
+
+		struct AudioEffectSlot {
+			int bus_index = 0;
+			int effect_index = 0;
+			uint64_t instance_id = 0;
+			bool enabled = false;
+			Ref<AudioEffect> effect;
+			Callable changed_callable;
+		};
+
 		HashMap<String, Ref<FmodAudioBus>> audio_buses_map;
-		String audio_server_layout_signature;
+		Vector<AudioServerBusState> audio_server_bus_states;
+		Vector<AudioEffectSlot> audio_effect_slots;
+		int next_audio_server_bus_index = 0;
+		int next_audio_effect_slot_index = 0;
+		bool audio_effects_dirty = false;
 
 		void _clear_buses_except_master();
 		Ref<FmodAudioBus> _ensure_master_bus();
 		void _sync_bus_effects(Ref<FmodAudioBus> bus, int audio_server_bus_index);
 		void _update_solo_mute();
-		String _build_audio_server_layout_signature() const;
+		void _cache_audio_server_state();
+		void _clear_audio_effect_observers();
+		void _on_audio_effect_changed();
+		bool _has_audio_server_bus_layout_changed(int p_bus_index) const;
+		bool _has_audio_server_bus_state_changed(int p_bus_index) const;
+		bool _has_audio_effect_instance_changed();
 
 	protected:
 		static void _bind_methods();
@@ -58,4 +88,3 @@ namespace godot {
 }
 
 #endif // !FMOD_AUDIO_BUS_LAYOUT_H
-

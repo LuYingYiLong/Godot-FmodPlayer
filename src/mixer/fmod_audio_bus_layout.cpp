@@ -39,30 +39,11 @@
 #include <godot_cpp/classes/audio_effect_spectrum_analyzer.hpp>
 #include <godot_cpp/classes/audio_effect_stereo_enhance.hpp>
 #include <godot_cpp/classes/audio_server.hpp>
-#include <godot_cpp/variant/typed_array.hpp>
 
 namespace godot {
 	namespace {
-		void _append_audio_effect_signature(String& r_signature, Ref<AudioEffect> p_effect) {
-			if (p_effect.is_null()) {
-				r_signature += "|effect:null";
-				return;
-			}
-
-			r_signature += vformat("|class=%s", p_effect->get_class());
-
-			TypedArray<Dictionary> properties = p_effect->get_property_list();
-			for (int i = 0; i < properties.size(); i++) {
-				Dictionary property = properties[i];
-				StringName property_name = property.get("name", StringName());
-				if (property_name == StringName()) {
-					continue;
-				}
-
-				Variant value = p_effect->get(property_name);
-				r_signature += vformat(";%s=%s", String(property_name), value.stringify());
-			}
-		}
+		constexpr int MAX_INCREMENTAL_BUS_CHECKS_PER_FRAME = 4;
+		constexpr int MAX_INCREMENTAL_EFFECT_CHECKS_PER_FRAME = 4;
 
 		class FmodDSPGraphLock {
 			Ref<FmodSystem> system;
@@ -554,34 +535,120 @@ namespace godot {
 		return bus->get_effect(index);
 	}
 
-	String FmodAudioBusLayout::_build_audio_server_layout_signature() const {
+	void FmodAudioBusLayout::_clear_audio_effect_observers() {
+		for (AudioEffectSlot& slot : audio_effect_slots) {
+			if (slot.effect.is_valid() && slot.effect->is_connected("changed", slot.changed_callable)) {
+				slot.effect->disconnect("changed", slot.changed_callable);
+			}
+		}
+		audio_effect_slots.clear();
+	}
+
+	void FmodAudioBusLayout::_cache_audio_server_state() {
 		AudioServer* audio_server = AudioServer::get_singleton();
 		if (!audio_server) {
-			return String();
+			audio_server_bus_states.clear();
+			_clear_audio_effect_observers();
+			return;
 		}
 
-		String signature = vformat("bus_count=%d", audio_server->get_bus_count());
-		for (int bus_index = 0; bus_index < audio_server->get_bus_count(); bus_index++) {
-			signature += vformat("|bus=%d,name=%s,send=%s,volume=%s,mute=%s,solo=%s,bypass=%s",
-				bus_index,
-				audio_server->get_bus_name(bus_index),
-				audio_server->get_bus_send(bus_index),
-				Variant(audio_server->get_bus_volume_db(bus_index)).stringify(),
-				Variant(audio_server->is_bus_mute(bus_index)).stringify(),
-				Variant(audio_server->is_bus_solo(bus_index)).stringify(),
-				Variant(audio_server->is_bus_bypassing_effects(bus_index)).stringify());
+		_clear_audio_effect_observers();
+		const int bus_count = audio_server->get_bus_count();
+		audio_server_bus_states.resize(bus_count);
 
-			const int32_t effect_count = audio_server->get_bus_effect_count(bus_index);
-			signature += vformat(",effect_count=%d", effect_count);
-			for (int32_t effect_index = 0; effect_index < effect_count; effect_index++) {
-				signature += vformat("|effect=%d,enabled=%s",
-					effect_index,
-					Variant(audio_server->is_bus_effect_enabled(bus_index, effect_index)).stringify());
-				_append_audio_effect_signature(signature, audio_server->get_bus_effect(bus_index, effect_index));
+		for (int bus_index = 0; bus_index < bus_count; bus_index++) {
+			AudioServerBusState& state = audio_server_bus_states.write[bus_index];
+			state.name = audio_server->get_bus_name(bus_index);
+			state.send = audio_server->get_bus_send(bus_index);
+			state.volume_db = audio_server->get_bus_volume_db(bus_index);
+			state.mute = audio_server->is_bus_mute(bus_index);
+			state.solo = audio_server->is_bus_solo(bus_index);
+			state.bypass = audio_server->is_bus_bypassing_effects(bus_index);
+			state.effect_count = audio_server->get_bus_effect_count(bus_index);
+
+			for (int effect_index = 0; effect_index < state.effect_count; effect_index++) {
+				Ref<AudioEffect> effect = audio_server->get_bus_effect(bus_index, effect_index);
+				if (effect.is_null()) {
+					continue;
+				}
+
+				AudioEffectSlot slot;
+				slot.bus_index = bus_index;
+				slot.effect_index = effect_index;
+				slot.instance_id = static_cast<uint64_t>(effect->get_instance_id());
+				slot.enabled = audio_server->is_bus_effect_enabled(bus_index, effect_index);
+				slot.effect = effect;
+				slot.changed_callable = callable_mp(this, &FmodAudioBusLayout::_on_audio_effect_changed);
+				effect->connect("changed", slot.changed_callable, CONNECT_DEFERRED);
+				audio_effect_slots.push_back(slot);
 			}
 		}
 
-		return signature;
+		next_audio_server_bus_index = 0;
+		next_audio_effect_slot_index = 0;
+		audio_effects_dirty = false;
+	}
+
+	void FmodAudioBusLayout::_on_audio_effect_changed() {
+		audio_effects_dirty = true;
+	}
+
+	bool FmodAudioBusLayout::_has_audio_server_bus_layout_changed(const int p_bus_index) const {
+		AudioServer* audio_server = AudioServer::get_singleton();
+		if (!audio_server || p_bus_index < 0 || p_bus_index >= audio_server_bus_states.size()) {
+			return true;
+		}
+
+		const AudioServerBusState& state = audio_server_bus_states[p_bus_index];
+		return state.name != audio_server->get_bus_name(p_bus_index)
+			|| state.send != audio_server->get_bus_send(p_bus_index)
+			|| state.effect_count != audio_server->get_bus_effect_count(p_bus_index);
+	}
+
+	bool FmodAudioBusLayout::_has_audio_server_bus_state_changed(const int p_bus_index) const {
+		AudioServer* audio_server = AudioServer::get_singleton();
+		if (!audio_server || p_bus_index < 0 || p_bus_index >= audio_server_bus_states.size()) {
+			return false;
+		}
+
+		const AudioServerBusState& state = audio_server_bus_states[p_bus_index];
+		return state.volume_db != audio_server->get_bus_volume_db(p_bus_index)
+			|| state.mute != audio_server->is_bus_mute(p_bus_index)
+			|| state.solo != audio_server->is_bus_solo(p_bus_index)
+			|| state.bypass != audio_server->is_bus_bypassing_effects(p_bus_index);
+	}
+
+	bool FmodAudioBusLayout::_has_audio_effect_instance_changed() {
+		if (audio_effect_slots.is_empty()) {
+			return false;
+		}
+
+		AudioServer* audio_server = AudioServer::get_singleton();
+		if (!audio_server) {
+			return true;
+		}
+
+		const int checks = MIN(MAX_INCREMENTAL_EFFECT_CHECKS_PER_FRAME, audio_effect_slots.size());
+		for (int i = 0; i < checks; i++) {
+			if (next_audio_effect_slot_index >= audio_effect_slots.size()) {
+				next_audio_effect_slot_index = 0;
+			}
+
+			const AudioEffectSlot& slot = audio_effect_slots[next_audio_effect_slot_index++];
+			if (slot.bus_index < 0 || slot.bus_index >= audio_server->get_bus_count()
+					|| slot.effect_index < 0 || slot.effect_index >= audio_server->get_bus_effect_count(slot.bus_index)) {
+				return true;
+			}
+
+			Ref<AudioEffect> effect = audio_server->get_bus_effect(slot.bus_index, slot.effect_index);
+			if (effect.is_null()
+					|| static_cast<uint64_t>(effect->get_instance_id()) != slot.instance_id
+					|| audio_server->is_bus_effect_enabled(slot.bus_index, slot.effect_index) != slot.enabled) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	void FmodAudioBusLayout::sync_from_audio_server() {
@@ -674,17 +741,55 @@ namespace godot {
 		// 应用 solo 静音
 		// bypass 已在每个 bus 的 set_bypass 中通过 sync_bypass 应用，无需额外操作
 		_update_solo_mute();
-		audio_server_layout_signature = _build_audio_server_layout_signature();
+		_cache_audio_server_state();
 	}
 
 	bool FmodAudioBusLayout::sync_from_audio_server_if_changed() {
-		String current_signature = _build_audio_server_layout_signature();
-		if (current_signature == audio_server_layout_signature) {
+		AudioServer* audio_server = AudioServer::get_singleton();
+		if (!audio_server) {
 			return false;
 		}
 
-		sync_from_audio_server();
-		return true;
+		const int bus_count = audio_server->get_bus_count();
+		if (bus_count != audio_server_bus_states.size() || audio_effects_dirty || _has_audio_effect_instance_changed()) {
+			sync_from_audio_server();
+			return true;
+		}
+
+		if (bus_count == 0) {
+			return false;
+		}
+
+		bool bus_state_changed = false;
+		const int checks = MIN(MAX_INCREMENTAL_BUS_CHECKS_PER_FRAME, bus_count);
+		for (int i = 0; i < checks; i++) {
+			if (next_audio_server_bus_index >= bus_count) {
+				next_audio_server_bus_index = 0;
+			}
+
+			const int bus_index = next_audio_server_bus_index++;
+			if (_has_audio_server_bus_layout_changed(bus_index)) {
+				sync_from_audio_server();
+				return true;
+			}
+
+			if (_has_audio_server_bus_state_changed(bus_index)) {
+				const AudioServerBusState& state = audio_server_bus_states[bus_index];
+				sync_bus_state(state.name, bus_index);
+				audio_server_bus_states.write[bus_index].volume_db = audio_server->get_bus_volume_db(bus_index);
+				audio_server_bus_states.write[bus_index].mute = audio_server->is_bus_mute(bus_index);
+				audio_server_bus_states.write[bus_index].solo = audio_server->is_bus_solo(bus_index);
+				audio_server_bus_states.write[bus_index].bypass = audio_server->is_bus_bypassing_effects(bus_index);
+				bus_state_changed = true;
+			}
+		}
+
+		if (bus_state_changed) {
+			_update_solo_mute();
+			return true;
+		}
+
+		return false;
 	}
 
 	void FmodAudioBusLayout::sync_bus_state(const String& bus_name, int audio_server_bus_index) const {
@@ -707,6 +812,10 @@ namespace godot {
 			}
 		}
 		audio_buses_map.clear();
-		audio_server_layout_signature = String();
+		audio_server_bus_states.clear();
+		_clear_audio_effect_observers();
+		next_audio_server_bus_index = 0;
+		next_audio_effect_slot_index = 0;
+		audio_effects_dirty = false;
 	}
 }
