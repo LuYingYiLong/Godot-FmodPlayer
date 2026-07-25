@@ -11,6 +11,31 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="add_sync_point">
+			<return type="int" />
+			<param index="0" name="offset" type="int" />
+			<param index="1" name="time_unit" type="int" enum="FmodSystem.FmodTimeUnit" />
+			<param index="2" name="name" type="String" />
+			<description>
+				Adds a sync point at the specified position in the sound and returns its handle. Returns [code]0[/code] on failure. Sync points trigger the [signal FmodChannel.syncpoint] signal during playback when reached.
+				[b]Note:[/b] Use [method get_sync_point_info] to get information about the returned sync point handle.
+			</description>
+		</method>
+		<method name="delete_sync_point">
+			<return type="bool" />
+			<param index="0" name="point" type="int" />
+			<description>
+				Removes a sync point from the sound. The [code]point[/code] parameter should be a handle obtained from [method get_sync_point] or [method add_sync_point]. Returns [code]true[/code] on success.
+			</description>
+		</method>
+		<method name="get_defaults" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+				Returns the sound's default playback attributes, which are used as the initial values for channels playing this sound. Returns a dictionary with:
+				- [code]frequency[/code]: Default playback frequency in Hz (float).
+				- [code]priority[/code]: Default priority (int, 0 to 256, where 0 is most important).
+			</description>
+		</method>
 		<method name="get_format" qualifiers="const">
 			<return type="Dictionary" />
 			<description>
@@ -62,6 +87,12 @@
 			<description>
 				Returns the number of sub-sounds in a multi-sound file. This is useful for formats like FSB (FMOD Sound Bank) or DLS (Downloadable Sounds) that contain multiple audio samples.
 				[b]Note:[/b] Regular audio files like MP3 or WAV typically return 0 for this value.
+			</description>
+		</method>
+		<method name="get_num_sync_points" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the number of sync points in the sound. This includes both sync points embedded in the audio file (e.g., cue points) and ones added with [method add_sync_point].
 			</description>
 		</method>
 		<method name="get_num_tags" qualifiers="const">

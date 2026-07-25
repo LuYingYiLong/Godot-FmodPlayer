@@ -233,7 +233,7 @@
 				Emitted when a sync point embedded in the sound file is reached.
 				Sync points are markers that can be embedded in audio files to trigger events at specific times.
 				The [param sync_point_index] parameter indicates which sync point was triggered.
-				Use [method FmodSound.get_sync_point_info] to get information about sync points in a sound.
+				Pass it to [method FmodSound.get_sync_point] to get the sync point handle, which can then be used with [method FmodSound.get_sync_point_info] to retrieve the sync point's name and offset.
 			</description>
 		</signal>
 		<signal name="virtualvoice">

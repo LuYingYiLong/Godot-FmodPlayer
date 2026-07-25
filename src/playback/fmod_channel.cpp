@@ -190,15 +190,16 @@ namespace godot {
 			break;
 
 		case FMOD_CHANNELCONTROL_CALLBACK_VIRTUALVOICE: {
-			ERR_FAIL_NULL(commanddata1);
-			int virtual_state = *reinterpret_cast<int*>(commanddata1);
+			// commanddata1 是以 void* 传递的 int 值(0=虚拟转真实, 1=真实转虚拟),不是指针
+			int virtual_state = (int)(intptr_t)commanddata1;
 			call_deferred("emit_signal", StringName("virtualvoice"), virtual_state == 1);
 			break;
 		}
 
 		case FMOD_CHANNELCONTROL_CALLBACK_SYNCPOINT: {
-			ERR_FAIL_NULL(commanddata1);
-			call_deferred("emit_signal", StringName("syncpoint"), static_cast<int64_t>(reinterpret_cast<uintptr_t>(commanddata1)));
+			// commanddata1 是以 void* 传递的同步点索引,不是 FMOD_SYNCPOINT 指针
+			int sync_point_index = (int)(intptr_t)commanddata1;
+			call_deferred("emit_signal", StringName("syncpoint"), sync_point_index);
 			break;
 		}
 

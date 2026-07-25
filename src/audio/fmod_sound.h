@@ -116,6 +116,7 @@ namespace godot {
 		// 格式信息
 		String get_name() const;										// 获取一个声音的名称
 		Dictionary get_format() const;									// 获取声音的格式信息
+		Dictionary get_defaults() const;								// 获取声音的默认播放属性
 		double get_length(
 			FmodSystem::FmodTimeUnit time_unit = FmodSystem::FMOD_TIME_UNIT_MS
 		) const;														// 获取声音时长
@@ -143,6 +144,13 @@ namespace godot {
 		float get_music_speed() const;									// 获取 MOD/S3M/XM/IT/MIDI 音乐的相对速度
 
 		// 同步/标记
+		int64_t add_sync_point(
+			const unsigned int offset,
+			FmodSystem::FmodTimeUnit time_unit,
+			const String& name
+		);																// 添加一个同步点
+		bool delete_sync_point(const int64_t point);					// 移除一个同步点
+		int get_num_sync_points() const;								// 获取同步点数量
 		int64_t get_sync_point(const int index) const;					// 获取一个同步点
 		Dictionary get_sync_point_info(
 			const int64_t point,
