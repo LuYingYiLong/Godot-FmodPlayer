@@ -151,6 +151,7 @@ public partial class FmodSound : RefCounted
 		public new static readonly StringName Setup = "setup";
 		public new static readonly StringName GetName = "get_name";
 		public new static readonly StringName GetFormat = "get_format";
+		public new static readonly StringName GetDefaults = "get_defaults";
 		public new static readonly StringName GetLength = "get_length";
 		public new static readonly StringName GetNumTags = "get_num_tags";
 		public new static readonly StringName GetTag = "get_tag";
@@ -163,6 +164,9 @@ public partial class FmodSound : RefCounted
 		public new static readonly StringName GetMusicChannelVolume = "get_music_channel_volume";
 		public new static readonly StringName SetMusicSpeed = "set_music_speed";
 		public new static readonly StringName GetMusicSpeed = "get_music_speed";
+		public new static readonly StringName AddSyncPoint = "add_sync_point";
+		public new static readonly StringName DeleteSyncPoint = "delete_sync_point";
+		public new static readonly StringName GetNumSyncPoints = "get_num_sync_points";
 		public new static readonly StringName GetSyncPoint = "get_sync_point";
 		public new static readonly StringName GetSyncPointInfo = "get_sync_point_info";
 		public new static readonly StringName GetNumSubSounds = "get_num_sub_sounds";
@@ -188,6 +192,9 @@ public partial class FmodSound : RefCounted
 
 	public new Godot.Collections.Dictionary GetFormat() => 
 		Call(GDExtensionMethodName.GetFormat, []).As<Godot.Collections.Dictionary>();
+
+	public new Godot.Collections.Dictionary GetDefaults() =>
+		Call(GDExtensionMethodName.GetDefaults, []).As<Godot.Collections.Dictionary>();
 
 	public new double GetLength(FmodSystem.FmodTimeUnit timeUnit = FmodSystem.FmodTimeUnit.Ms) => 
 		Call(GDExtensionMethodName.GetLength, [Variant.From(timeUnit)]).As<double>();
@@ -224,6 +231,15 @@ public partial class FmodSound : RefCounted
 
 	public new double GetMusicSpeed() => 
 		Call(GDExtensionMethodName.GetMusicSpeed, []).As<double>();
+
+	public new long AddSyncPoint(long offset, FmodSystem.FmodTimeUnit timeUnit, string name) =>
+		Call(GDExtensionMethodName.AddSyncPoint, [offset, Variant.From(timeUnit), name]).As<long>();
+
+	public new bool DeleteSyncPoint(long point) =>
+		Call(GDExtensionMethodName.DeleteSyncPoint, [point]).As<bool>();
+
+	public new long GetNumSyncPoints() =>
+		Call(GDExtensionMethodName.GetNumSyncPoints, []).As<long>();
 
 	public new long GetSyncPoint(long index) => 
 		Call(GDExtensionMethodName.GetSyncPoint, [index]).As<long>();
