@@ -79,6 +79,7 @@ namespace godot {
 
 		ClassDB::bind_method(D_METHOD("get_name"), &FmodSound::get_name);
 		ClassDB::bind_method(D_METHOD("get_format"), &FmodSound::get_format);
+		ClassDB::bind_method(D_METHOD("get_defaults"), &FmodSound::get_defaults);
 		ClassDB::bind_method(D_METHOD("get_length", "time_unit"), &FmodSound::get_length, DEFVAL(FmodSystem::FMOD_TIME_UNIT_MS));
 		ClassDB::bind_method(D_METHOD("get_num_tags"), &FmodSound::get_num_tags);
 		ClassDB::bind_method(D_METHOD("get_tag", "index", "name"), &FmodSound::get_tag, DEFVAL(String()));
@@ -94,6 +95,9 @@ namespace godot {
 		ClassDB::bind_method(D_METHOD("set_music_speed", "speed"), &FmodSound::set_music_speed);
 		ClassDB::bind_method(D_METHOD("get_music_speed"), &FmodSound::get_music_speed);
 
+		ClassDB::bind_method(D_METHOD("add_sync_point", "offset", "time_unit", "name"), &FmodSound::add_sync_point);
+		ClassDB::bind_method(D_METHOD("delete_sync_point", "point"), &FmodSound::delete_sync_point);
+		ClassDB::bind_method(D_METHOD("get_num_sync_points"), &FmodSound::get_num_sync_points);
 		ClassDB::bind_method(D_METHOD("get_sync_point", "index"), &FmodSound::get_sync_point);
 		ClassDB::bind_method(D_METHOD("get_sync_point_info", "point", "time_unit"), &FmodSound::get_sync_point_info, DEFVAL(FmodSystem::FMOD_TIME_UNIT_MS));
 		ClassDB::bind_method(D_METHOD("get_num_sub_sounds"), &FmodSound::get_num_sub_sounds);
@@ -160,6 +164,17 @@ namespace godot {
 		info["format"] = static_cast<int>(format);
 		info["channels"] = channels;
 		info["bits"] = bits;
+		return info;
+	}
+
+	Dictionary FmodSound::get_defaults() const {
+		ERR_FAIL_COND_V(!sound, Dictionary());
+		float frequency = 0.0f;
+		int priority = 0;
+		FMOD_ERR_CHECK_V(sound->getDefaults(&frequency, &priority), Dictionary());
+		Dictionary info;
+		info["frequency"] = frequency;
+		info["priority"] = priority;
 		return info;
 	}
 
@@ -363,6 +378,27 @@ namespace godot {
 		float speed = 0.0f;
 		FMOD_ERR_CHECK_V(sound->getMusicSpeed(&speed), 0.0f);
 		return speed;
+	}
+
+	int64_t FmodSound::add_sync_point(const unsigned int offset, FmodSystem::FmodTimeUnit time_unit, const String& name) {
+		ERR_FAIL_COND_V(!sound, 0);
+		FMOD_SYNCPOINT* point = nullptr;
+		FMOD_ERR_CHECK_V(sound->addSyncPoint(offset, static_cast<FMOD_TIMEUNIT>(time_unit), name.utf8().get_data(), &point), 0);
+		return (int64_t)(uintptr_t)point;
+	}
+
+	bool FmodSound::delete_sync_point(const int64_t point_ptr) {
+		ERR_FAIL_COND_V(!sound, false);
+		FMOD_SYNCPOINT* point = reinterpret_cast<FMOD_SYNCPOINT*>(static_cast<uintptr_t>(point_ptr));
+		FMOD_ERR_CHECK_V(sound->deleteSyncPoint(point), false);
+		return true;
+	}
+
+	int FmodSound::get_num_sync_points() const {
+		ERR_FAIL_COND_V(!sound, 0);
+		int num_sync_points = 0;
+		FMOD_ERR_CHECK_V(sound->getNumSyncPoints(&num_sync_points), 0);
+		return num_sync_points;
 	}
 
 	int64_t FmodSound::get_sync_point(const int index) const {
