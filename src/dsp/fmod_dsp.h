@@ -92,7 +92,7 @@ namespace godot {
 		};
 
 		FMOD::DSP* dsp = nullptr;
-		FMOD_DSP_DESCRIPTION* dsp_description = nullptr;  // 用于自定义 DSP，管理描述符生命周期
+		FMOD_DSP_DESCRIPTION* dsp_description = nullptr;								// 用于自定义 DSP，管理描述符生命周期
 
 		void setup(FMOD::DSP* p_dsp, FMOD_DSP_DESCRIPTION* p_desc = nullptr);
 
@@ -157,7 +157,7 @@ namespace godot {
 		FmodDSPType get_type() const;                                                   // 获取 FMOD 注册 DSP 单元的预定义类型
 		Dictionary get_info() const;                                                    // 获取 DSP 单元的信息
 		Dictionary get_cpu_usage() const;                                               // 获取该设备混合线程 CPU 使用率的统计数据
-		Ref<FmodSystem> get_system_object() const;                                          // 获取父系统对象
+		Ref<FmodSystem> get_system_object() const;                                      // 获取父系统对象
 
 		// DSP 回调设置
 		void set_create_callback(const Callable &p_callback);
