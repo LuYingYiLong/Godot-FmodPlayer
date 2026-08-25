@@ -1,5 +1,6 @@
 #include "fmod_audio_preview_property.h"
 
+#include <cstdint>
 #include <cstring>
 
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
@@ -196,7 +197,7 @@ namespace godot {
 		}
 
 		Size2 size = _preview->get_size();
-		int width = (int)size.width;
+		int width = static_cast<int>(size.width);
 		if (width <= 0 || size.height <= 0) {
 			return;
 		}
@@ -216,7 +217,7 @@ namespace godot {
 
 		const int source_width = cached_waveform_points.size() / 2;
 		for (int i = 0; i < width; i++) {
-			int source_index = CLAMP((int)((float)i / MAX(width - 1, 1) * MAX(source_width - 1, 0)), 0, MAX(source_width - 1, 0));
+			int source_index = CLAMP(static_cast<int>(static_cast<float>(i) / MAX(width - 1, 1) * MAX(source_width - 1, 0)), 0, MAX(source_width - 1, 0));
 			float min_y_norm = cached_waveform_points[source_index * 2].y;
 			float max_y_norm = cached_waveform_points[source_index * 2 + 1].y;
 
@@ -259,7 +260,7 @@ namespace godot {
 		}
 
 		const unsigned int max_read_bytes = 30 * 1024 * 1024;
-		unsigned int read_length = (unsigned int)MIN(pcm_bytes, (double)max_read_bytes);
+		unsigned int read_length = static_cast<unsigned int>(MIN(pcm_bytes, static_cast<double>(max_read_bytes)));
 
 		PackedByteArray data;
 		Ref<FmodSoundLock> lock = temp_sound->lock(0, read_length);
@@ -295,8 +296,8 @@ namespace godot {
 		points.resize(waveform_width * 2);
 
 		for (int i = 0; i < waveform_width; i++) {
-			int start_frame = (int)(i * (float)total_frames / waveform_width);
-			int end_frame = (int)((i + 1) * (float)total_frames / waveform_width);
+			int start_frame = static_cast<int>(i * static_cast<float>(total_frames) / waveform_width);
+			int end_frame = static_cast<int>((i + 1) * static_cast<float>(total_frames) / waveform_width);
 			end_frame = MIN(end_frame, total_frames);
 			start_frame = CLAMP(start_frame, 0, MAX(end_frame - 1, 0));
 
@@ -318,27 +319,39 @@ namespace godot {
 
 					switch (sound_format) {
 						case FmodSound::FMOD_SOUND_FORMAT_PCM8:
-							sample_val = (float)(*ptr) / 127.5f - 1.0f;
+							sample_val = static_cast<float>(*ptr) / 127.5f - 1.0f;
 							break;
 
 						case FmodSound::FMOD_SOUND_FORMAT_PCM16: {
-							int16_t val = (int16_t)(ptr[0] | (ptr[1] << 8));
-							sample_val = (float)val / 32767.0f;
+							const uint16_t raw_value = static_cast<uint16_t>(ptr[0]) |
+									(static_cast<uint16_t>(ptr[1]) << 8);
+							int16_t value = 0;
+							memcpy(&value, &raw_value, sizeof(value));
+							sample_val = static_cast<float>(value) / 32767.0f;
 							break;
 						}
 
 						case FmodSound::FMOD_SOUND_FORMAT_PCM24: {
-							int32_t val = (int32_t)(ptr[0] | (ptr[1] << 8) | (ptr[2] << 16));
-							if (val & 0x800000) {
-								val |= 0xFF000000;
+							uint32_t raw_value = static_cast<uint32_t>(ptr[0]) |
+									(static_cast<uint32_t>(ptr[1]) << 8) |
+									(static_cast<uint32_t>(ptr[2]) << 16);
+							if ((raw_value & 0x00800000U) != 0U) {
+								raw_value |= 0xFF000000U;
 							}
-							sample_val = (float)val / 8388607.0f;
+							int32_t value = 0;
+							memcpy(&value, &raw_value, sizeof(value));
+							sample_val = static_cast<float>(value) / 8388607.0f;
 							break;
 						}
 
 						case FmodSound::FMOD_SOUND_FORMAT_PCM32: {
-							int32_t val = (int32_t)(ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24));
-							sample_val = (float)val / 2147483647.0f;
+							const uint32_t raw_value = static_cast<uint32_t>(ptr[0]) |
+									(static_cast<uint32_t>(ptr[1]) << 8) |
+									(static_cast<uint32_t>(ptr[2]) << 16) |
+									(static_cast<uint32_t>(ptr[3]) << 24);
+							int32_t value = 0;
+							memcpy(&value, &raw_value, sizeof(value));
+							sample_val = static_cast<float>(value) / 2147483647.0f;
 							break;
 						}
 
@@ -348,11 +361,14 @@ namespace godot {
 
 						default:
 							if (bits == 8) {
-								sample_val = (float)(*ptr) / 127.5f - 1.0f;
+							sample_val = static_cast<float>(*ptr) / 127.5f - 1.0f;
 							}
 							else {
-								int16_t val = (int16_t)(ptr[0] | (ptr[1] << 8));
-								sample_val = (float)val / 32767.0f;
+							const uint16_t raw_value = static_cast<uint16_t>(ptr[0]) |
+									(static_cast<uint16_t>(ptr[1]) << 8);
+								int16_t value = 0;
+								memcpy(&value, &raw_value, sizeof(value));
+							sample_val = static_cast<float>(value) / 32767.0f;
 							}
 							break;
 					}
@@ -373,8 +389,8 @@ namespace godot {
 				max_y = mid + 0.005f;
 			}
 
-			points.set(i * 2, Vector2((float)i / waveform_width, CLAMP(min_y, 0.0f, 1.0f)));
-			points.set(i * 2 + 1, Vector2((float)i / waveform_width, CLAMP(max_y, 0.0f, 1.0f)));
+			points.set(i * 2, Vector2(static_cast<float>(i) / waveform_width, CLAMP(min_y, 0.0f, 1.0f)));
+			points.set(i * 2 + 1, Vector2(static_cast<float>(i) / waveform_width, CLAMP(max_y, 0.0f, 1.0f)));
 		}
 
 		cached_waveform_points = points;

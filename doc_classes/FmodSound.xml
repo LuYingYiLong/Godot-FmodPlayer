@@ -133,7 +133,7 @@
 				- [code]name[/code]: Name of the sync point.
 				- [code]offset[/code]: Position of the sync point in the specified time units.
 				- [code]time_unit[/code]: The time unit used for the offset.
-				- [code]pointer[/code]: The sync point handle.
+				- [code]id[/code]: The opaque sync point handle.
 			</description>
 		</method>
 		<method name="get_tag" qualifiers="const">

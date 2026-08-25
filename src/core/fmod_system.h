@@ -6,6 +6,8 @@
 #include <fmod_errors.h>
 #include <godot_cpp/classes/ref_counted.hpp>
 
+#include <vector>
+
 namespace godot {
 	class FmodSound;
 	class FmodChannel;
@@ -174,6 +176,8 @@ namespace godot {
 
 	private:
 		FMOD::System* system = nullptr;
+		bool owns_system = false;
+		mutable std::vector<FMOD_DSP_DESCRIPTION*> dsp_descriptions;
 
 		FMOD_ADVANCEDSETTINGS settings = {};
 
@@ -185,11 +189,15 @@ namespace godot {
 
 		void _apply_advanced_settings();
 		void _apply_3d_settings();
+		void _release_dsp_descriptions() const;
+		Ref<FmodDSP> _create_dsp_from_description(FMOD_DSP_DESCRIPTION* p_description) const;
 
 	protected:
 		static void _bind_methods();
 
 	public:
+		void setup_borrowed(FMOD::System* p_system);
+		Ref<FmodDSP> create_dsp_from_description(const FMOD_DSP_DESCRIPTION& p_description) const;
 		FmodSystem();
 		~FmodSystem();
 

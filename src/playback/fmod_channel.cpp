@@ -1,5 +1,7 @@
 #include "fmod_channel.h"
 
+#include <cstdint>
+
 namespace godot {
 	void FmodChannel::_bind_methods() {
 		ClassDB::bind_method(D_METHOD("channel_is_valid"), &FmodChannel::channel_is_valid);
@@ -69,26 +71,26 @@ namespace godot {
 	void FmodChannel::set_frequency(const double frequency) {
 		ERR_FAIL_COND(!channel);
 		ERR_FAIL_COND_MSG(frequency <= 0.0, "frequency must be greater than 0.");
-		FMOD_ERR_CHECK(channel->setFrequency((float)frequency));
+		FMOD_ERR_CHECK(channel->setFrequency(static_cast<float>(frequency)));
 	}
 
 	double FmodChannel::get_frequency() const {
 		if (!channel) return 0.0;
 		float frequency = 0.0;
 		FMOD_ERR_CHECK(channel->getFrequency(&frequency));
-		return (double)frequency;
+		return static_cast<double>(frequency);
 	}
 
 	void FmodChannel::set_priority(const int priority) {
 		ERR_FAIL_COND(!channel);
-		FMOD_ERR_CHECK(channel->setPriority((int)priority));
+		FMOD_ERR_CHECK(channel->setPriority(priority));
 	}
 
 	int FmodChannel::get_priority() const {
 		if (!channel) return 0;
 		int priority = 0;
 		FMOD_ERR_CHECK(channel->getPriority(&priority));
-		return (int)priority;
+		return priority;
 	}
 
 	void FmodChannel::set_position(int position, FmodSystem::FmodTimeUnit timeunit) {
@@ -131,13 +133,13 @@ namespace godot {
 	void FmodChannel::set_loop_points(const unsigned int start, const unsigned int end, FmodSystem::FmodTimeUnit timeunit) {
 		ERR_FAIL_COND(!channel);
 		ERR_FAIL_COND_MSG(end < start, "Loop end must be greater than or equal to start.");
-		FMOD_TIMEUNIT fmod_timeunit = static_cast<FMOD_TIMEUNIT>((int)timeunit);
-		FMOD_ERR_CHECK(channel->setLoopPoints((unsigned int)start, fmod_timeunit, (unsigned int)end, fmod_timeunit));
+		FMOD_TIMEUNIT fmod_timeunit = static_cast<FMOD_TIMEUNIT>(timeunit);
+		FMOD_ERR_CHECK(channel->setLoopPoints(start, fmod_timeunit, end, fmod_timeunit));
 	}
 
 	Dictionary FmodChannel::get_loop_points(FmodSystem::FmodTimeUnit timeunit) const {
 		if (!channel) return Dictionary();
-		FMOD_TIMEUNIT fmod_timeunit = static_cast<FMOD_TIMEUNIT>((int)timeunit);
+		FMOD_TIMEUNIT fmod_timeunit = static_cast<FMOD_TIMEUNIT>(timeunit);
 		unsigned int start, end;
 		FMOD_ERR_CHECK(channel->getLoopPoints(&start, fmod_timeunit, &end, fmod_timeunit));
 		Dictionary result;
@@ -159,16 +161,9 @@ namespace godot {
 		FMOD_ERR_CHECK_V(channel->getCurrentSound(&sound_ptr), Ref<FmodSound>());
 		ERR_FAIL_NULL_V(sound_ptr, Ref<FmodSound>());
 
-		// 尝试从 userdata 获取已有对象
-		void* userdata = nullptr;
-		sound_ptr->getUserData(&userdata);
-		if (userdata) {
-			return Ref<FmodSound>(static_cast<FmodSound*>(userdata));
-		}
-
 		Ref<FmodSound> sound;
 		sound.instantiate();
-		sound->setup(sound_ptr);
+		sound->setup(sound_ptr, false);
 		return sound;
 	}
 
@@ -191,14 +186,14 @@ namespace godot {
 
 		case FMOD_CHANNELCONTROL_CALLBACK_VIRTUALVOICE: {
 			// commanddata1 是以 void* 传递的 int 值(0=虚拟转真实, 1=真实转虚拟),不是指针
-			int virtual_state = (int)(intptr_t)commanddata1;
+			int virtual_state = static_cast<int>(reinterpret_cast<intptr_t>(commanddata1));
 			call_deferred("emit_signal", StringName("virtualvoice"), virtual_state == 1);
 			break;
 		}
 
 		case FMOD_CHANNELCONTROL_CALLBACK_SYNCPOINT: {
 			// commanddata1 是以 void* 传递的同步点索引,不是 FMOD_SYNCPOINT 指针
-			int sync_point_index = (int)(intptr_t)commanddata1;
+			int sync_point_index = static_cast<int>(reinterpret_cast<intptr_t>(commanddata1));
 			call_deferred("emit_signal", StringName("syncpoint"), sync_point_index);
 			break;
 		}

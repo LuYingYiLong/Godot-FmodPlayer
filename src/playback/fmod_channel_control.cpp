@@ -179,7 +179,7 @@ namespace godot {
 		if (!channel_control) return FmodSystem::FMOD_MODE_DEFAULT;
 		FMOD_MODE fmod_mode;
 		FMOD_ERR_CHECK(channel_control->getMode(&fmod_mode));
-		FmodSystem::FmodMode mode = static_cast<FmodSystem::FmodMode>((int)fmod_mode);
+		FmodSystem::FmodMode mode = static_cast<FmodSystem::FmodMode>(fmod_mode);
 		return mode;
 	}
 
@@ -487,8 +487,9 @@ namespace godot {
 		ERR_FAIL_COND_MSG(matrix.size() < expected_size,
 			vformat("Matrix size (%d) is smaller than expected (%d)", matrix.size(), expected_size));
 
+		PackedFloat32Array fmod_matrix = matrix;
 		FMOD_ERR_CHECK(channel_control->setMixMatrix(
-			const_cast<float*>(matrix.ptr()),
+			fmod_matrix.ptrw(),
 			outchannels,
 			inchannels,
 			inchannel_hop
@@ -585,19 +586,10 @@ namespace godot {
 
 		if (!dsp_ptr) return Ref<FmodDSP>();
 
-		// 尝试从 userdata 获取已有对象
-		void* userdata = nullptr;
-		dsp_ptr->getUserData(&userdata);
-
-		if (userdata) {
-			// 复用已有对象
-			return Ref<FmodDSP>(static_cast<FmodDSP*>(userdata));
-		}
-
-		// 如果没有，创建新对象并设置 userdata
+		// 该 DSP 由 ChannelControl 持有，返回的包装器不得释放它
 		Ref<FmodDSP> dsp;
 		dsp.instantiate();
-		dsp->setup(dsp_ptr);
+		dsp->setup(dsp_ptr, false);
 
 		return dsp;
 	}
@@ -621,8 +613,8 @@ namespace godot {
 		unsigned long long dspclock = 0, parentclock = 0;
 		FMOD_ERR_CHECK_V(channel_control->getDSPClock(&dspclock, &parentclock), Dictionary());
 		Dictionary result;
-		result["dsp_lock"] = (uint64_t)dspclock;
-		result["parent_clock"] = (uint64_t)parentclock;
+		result["dsp_lock"] = static_cast<uint64_t>(dspclock);
+		result["parent_clock"] = static_cast<uint64_t>(parentclock);
 		return result;
 	}
 
@@ -641,8 +633,8 @@ namespace godot {
 		bool stopchannels = true;
 		FMOD_ERR_CHECK_V(channel_control->getDelay(&start, &end, &stopchannels), Dictionary());
 		Dictionary result;
-		result["start"] = (uint64_t)start;
-		result["end"] = (uint64_t)end;
+		result["start"] = static_cast<uint64_t>(start);
+		result["end"] = static_cast<uint64_t>(end);
 		result["stop_channels"] = stopchannels;
 		return result;
 	}
@@ -687,7 +679,7 @@ namespace godot {
 		}
 
 		Dictionary result;
-		result["num_points"] = (uint32_t)numpoints;
+		result["num_points"] = static_cast<uint32_t>(numpoints);
 		result["point_dspclocks"] = point_dspclocks;
 		result["point_volumes"] = point_volumes;
 		return result;
@@ -712,7 +704,7 @@ namespace godot {
 		void* commanddata1,
 		void* commanddata2
 	) {
-		call_deferred("emit_signal", StringName("callback_received"), (int)callbacktype);
+		call_deferred("emit_signal", StringName("callback_received"), static_cast<int>(callbacktype));
 	}
 }
 
@@ -725,7 +717,7 @@ FMOD_RESULT F_CALL fmod_channel_control_callback(
 ) {
 	// 获取 userdata（指向 FmodChannelControl 对象）
 	void* userdata = nullptr;
-	FMOD_RESULT result = ((FMOD::ChannelControl*)channelcontrol)->getUserData(&userdata);
+	FMOD_RESULT result = reinterpret_cast<FMOD::ChannelControl*>(channelcontrol)->getUserData(&userdata);
 
 	if (result != FMOD_OK || !userdata) {
 		return FMOD_OK;

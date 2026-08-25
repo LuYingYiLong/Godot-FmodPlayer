@@ -108,7 +108,7 @@ namespace godot {
 	}
 
 	void FmodGeometryMeshToolsPlugin::_on_menu_id_pressed(int p_id) {
-		_create_fmod_geometry_from_selection((MenuOption)p_id);
+		_create_fmod_geometry_from_selection(static_cast<MenuOption>(p_id));
 	}
 
 	void FmodGeometryMeshToolsPlugin::_create_fmod_geometry_from_selection(MenuOption p_option) {

@@ -62,7 +62,7 @@ namespace godot {
 		FMOD_BOOL inputsidle,
 		FMOD_DSP_PROCESS_OPERATION op) {
 
-		(void)inputsidle;
+		static_cast<void>(inputsidle);
 
 		if (!inbufferarray || !outbufferarray ||
 			inbufferarray->numbuffers <= 0 || outbufferarray->numbuffers <= 0 ||
@@ -254,8 +254,8 @@ namespace godot {
 		
 		if (op == FMOD_DSP_PROCESS_PERFORM) {
 			// 安全检查：输入输出缓冲区
-			float* in = (float*)inbufferarray->buffers[0];
-			float* out = (float*)outbufferarray->buffers[0];
+			float* in = static_cast<float*>(inbufferarray->buffers[0]);
+			float* out = static_cast<float*>(outbufferarray->buffers[0]);
 			int ch = inbufferarray->buffernumchannels[0];
 			
 			if (!in || !out || ch <= 0) {
@@ -385,17 +385,11 @@ namespace godot {
 		dsp_userdata->channels = 2;
 		desc.userdata = dsp_userdata;
 
-		FMOD::DSP* dsp_ptr = nullptr;
-		FMOD_RESULT result = fmod_system->createDSP(&desc, &dsp_ptr);
-		if (result != FMOD_OK || !dsp_ptr) {
+		Ref<FmodDSP> dsp = system->create_dsp_from_description(desc);
+		if (dsp.is_null()) {
 			delete dsp_userdata;
-			ERR_PRINT(vformat("Failed to create capture DSP: %s", FMOD_ErrorString(result)));
 			return Ref<FmodDSP>();
 		}
-
-		Ref<FmodDSP> dsp;
-		dsp.instantiate();
-		dsp->setup(dsp_ptr);
 		return dsp;
 	}
 

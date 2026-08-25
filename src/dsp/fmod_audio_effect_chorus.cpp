@@ -144,7 +144,7 @@ namespace godot {
 		FMOD_BOOL inputsidle,
 		FMOD_DSP_PROCESS_OPERATION op) {
 
-		(void)inputsidle;
+		static_cast<void>(inputsidle);
 
 		if (!inbufferarray || !outbufferarray ||
 			inbufferarray->numbuffers <= 0 || outbufferarray->numbuffers <= 0 ||
@@ -433,17 +433,11 @@ namespace godot {
 		dsp_userdata->chorus_state = chorus_state;
 		desc.userdata = dsp_userdata;
 
-		FMOD::DSP* dsp_ptr = nullptr;
-		FMOD_RESULT result = fmod_system->createDSP(&desc, &dsp_ptr);
-		if (result != FMOD_OK || !dsp_ptr) {
+		Ref<FmodDSP> dsp = system->create_dsp_from_description(desc);
+		if (dsp.is_null()) {
 			delete dsp_userdata;
-			ERR_PRINT(vformat("Failed to create chorus DSP: %s", FMOD_ErrorString(result)));
 			return Ref<FmodDSP>();
 		}
-
-		Ref<FmodDSP> dsp;
-		dsp.instantiate();
-		dsp->setup(dsp_ptr);
 		return dsp;
 	}
 

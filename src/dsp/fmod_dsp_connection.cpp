@@ -29,33 +29,25 @@ namespace godot {
 	}
 
 	FmodDSPConnection::~FmodDSPConnection() {
-		if (dsp_connection) {
-			dsp_connection->setUserData(nullptr);
-		}
 		dsp_connection = nullptr;
 	}
 
 	void FmodDSPConnection::setup(FMOD::DSPConnection* p_connection) {
 		ERR_FAIL_COND_MSG(!p_connection, "DSPConnection pointer is null");
 
-		if (dsp_connection) {
-			dsp_connection->setUserData(nullptr);
-		}
-
 		dsp_connection = p_connection;
-		dsp_connection->setUserData(this);
 	}
 
 	void FmodDSPConnection::set_mix(const float volume_db) {
 		ERR_FAIL_COND(!dsp_connection);
-		FMOD_ERR_CHECK(dsp_connection->setMix((float)FmodUtils::dbfs_to_sample(volume_db)));
+		FMOD_ERR_CHECK(dsp_connection->setMix(static_cast<float>(FmodUtils::dbfs_to_sample(volume_db))));
 	}
 
 	float FmodDSPConnection::get_mix() const {
 		if (!dsp_connection) return 0.0f;
 		float volume = 0.0f;
 		FMOD_ERR_CHECK(dsp_connection->getMix(&volume));
-		return (float)FmodUtils::sample_to_dbfs(volume);
+		return static_cast<float>(FmodUtils::sample_to_dbfs(volume));
 	}
 
 	void FmodDSPConnection::set_mix_matrix(
@@ -79,9 +71,12 @@ namespace godot {
 		ERR_FAIL_COND_MSG(matrix.size() < expected_size,
 			vformat("Matrix size (%d) is smaller than expected (%d)", matrix.size(), expected_size));
 
+		// FMOD 的接口没有 const 限定；传入独立副本以避免修改调用方的数组
+		PackedFloat32Array fmod_matrix = matrix;
+
 		// 调用 FMOD API
 		FMOD_ERR_CHECK(dsp_connection->setMixMatrix(
-			const_cast<float*>(matrix.ptr()),  // FMOD 需要非 const 指针
+			fmod_matrix.ptrw(),
 			outchannels,
 			inchannels,
 			inchannel_hop
@@ -124,7 +119,7 @@ namespace godot {
 		FMOD_ERR_CHECK_V(dsp_connection->getInput(&dsp_ptr), Ref<FmodDSP>());
 		Ref<FmodDSP> dsp;
 		dsp.instantiate();
-		dsp->setup(dsp_ptr);
+		dsp->setup(dsp_ptr, false);
 		return dsp;
 	}
 
@@ -134,7 +129,7 @@ namespace godot {
 		FMOD_ERR_CHECK_V(dsp_connection->getOutput(&dsp_ptr), Ref<FmodDSP>());
 		Ref<FmodDSP> dsp;
 		dsp.instantiate();
-		dsp->setup(dsp_ptr);
+		dsp->setup(dsp_ptr, false);
 		return dsp;
 	}
 
@@ -142,7 +137,7 @@ namespace godot {
 		ERR_FAIL_COND_V(!dsp_connection, DSPCONNECTION_TYPE_STANDARD);
 		FMOD_DSPCONNECTION_TYPE connection_type = FMOD_DSPCONNECTION_TYPE_STANDARD;
 		FMOD_ERR_CHECK_V(dsp_connection->getType(&connection_type), DSPCONNECTION_TYPE_STANDARD);
-		FmodDSPConnectionType to = static_cast<FmodDSPConnectionType>((int)connection_type);
+		FmodDSPConnectionType to = static_cast<FmodDSPConnectionType>(connection_type);
 		return to;
 	}
 }

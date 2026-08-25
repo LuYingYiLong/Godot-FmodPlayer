@@ -465,17 +465,11 @@ namespace godot {
 		memcpy(&desc, base_desc, sizeof(FMOD_DSP_DESCRIPTION));
 		desc.userdata = userdata;
 
-		FMOD::DSP* dsp_ptr = nullptr;
-		FMOD_RESULT result = fmod_system->createDSP(&desc, &dsp_ptr);
-		if (result != FMOD_OK || !dsp_ptr) {
+		Ref<FmodDSP> dsp = system->create_dsp_from_description(desc);
+		if (dsp.is_null()) {
 			delete userdata;
-			ERR_PRINT(vformat("Failed to create reverb DSP: %s", FMOD_ErrorString(result)));
 			return Ref<FmodDSP>();
 		}
-
-		Ref<FmodDSP> dsp;
-		dsp.instantiate();
-		dsp->setup(dsp_ptr);
 		return dsp;
 	}
 

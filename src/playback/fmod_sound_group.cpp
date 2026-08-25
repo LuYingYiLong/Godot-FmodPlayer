@@ -130,15 +130,9 @@ namespace godot {
 		FMOD::Sound* sound_ptr = nullptr;
 		FMOD_ERR_CHECK_V(sound_group->getSound(index, &sound_ptr), Ref<FmodSound>());
 		ERR_FAIL_NULL_V(sound_ptr, Ref<FmodSound>());
-		void* userdata = nullptr;
-		sound_ptr->getUserData(&userdata);
-		if (userdata) {
-			return Ref<FmodSound>(static_cast<FmodSound*>(userdata));
-		}
-
 		Ref<FmodSound> sound;
 		sound.instantiate();
-		sound->setup(sound_ptr);
+		sound->setup(sound_ptr, false);
 		return sound;
 	}
 

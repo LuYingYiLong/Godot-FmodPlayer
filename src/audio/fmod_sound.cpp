@@ -1,8 +1,17 @@
 #include "fmod_sound.h"
 
+#include <cstdint>
 #include <cstring>
+#include <vector>
+
+#include <godot_cpp/classes/os.hpp>
 
 namespace godot {
+	static bool _is_main_thread() {
+		OS* os = OS::get_singleton();
+		return os && os->get_thread_caller_id() == os->get_main_thread_id();
+	}
+
 	void FmodSound::_bind_methods() {
 		BIND_ENUM_CONSTANT(FMOD_SOUND_TYPE_UNKNOWN);
 		BIND_ENUM_CONSTANT(FMOD_SOUND_TYPE_AIFF);
@@ -116,10 +125,16 @@ namespace godot {
 
 	FmodSound::~FmodSound() {
 		if (sound) {
-			sound->setUserData(nullptr);
-			sound->release();
+			void* userdata = nullptr;
+			if (owns_sound && sound->getUserData(&userdata) == FMOD_OK && userdata == this) {
+				sound->setUserData(nullptr);
+			}
+			if (owns_sound && sound->release() != FMOD_OK) {
+				ERR_PRINT("Failed to release Sound while destroying FmodSound");
+			}
 			sound = nullptr;
 		}
+		sync_points.clear();
 	}
 
 	Ref<FmodSound> FmodSound::load_from_file(const String& p_path) {
@@ -134,15 +149,15 @@ namespace godot {
 		return sound == nullptr;
 	}
 
-	void FmodSound::setup(FMOD::Sound* p_sound) {
+	void FmodSound::setup(FMOD::Sound* p_sound, bool p_owns_sound) {
 		ERR_FAIL_COND_MSG(!p_sound, "Sound pointer is null");
-
-		if (sound) {
-			sound->setUserData(nullptr);
-		}
+		ERR_FAIL_COND_MSG(sound != nullptr, "FmodSound is already bound to an FMOD Sound");
 
 		sound = p_sound;
-		sound->setUserData(this);
+		owns_sound = p_owns_sound;
+		if (owns_sound) {
+			FMOD_ERR_CHECK(sound->setUserData(this));
+		}
 	}
 
 	String FmodSound::get_name() const {
@@ -183,9 +198,9 @@ namespace godot {
 		FMOD_ERR_CHECK(sound->getLength(&length, time_unit));
 		// 只有时间单位（MS）才需要转换为秒，字节数和采样数直接返回
 		if (time_unit == FmodSystem::FMOD_TIME_UNIT_MS) {
-			return (double)length / 1000.0;
+			return static_cast<double>(length) / 1000.0;
 		}
-		return (double)length;
+		return static_cast<double>(length);
 	}
 
 	Dictionary FmodSound::get_num_tags() const {
@@ -201,16 +216,18 @@ namespace godot {
 
 	Dictionary FmodSound::get_tag(const int index, const String& name) const {
 		ERR_FAIL_COND_V(!sound, Dictionary());
+		CharString name_utf8;
 		const char* char_ptr = nullptr;
 		if (!name.is_empty()) {
-			char_ptr = name.utf8().get_data();
+			name_utf8 = name.utf8();
+			char_ptr = name_utf8.get_data();
 		}
 		FMOD_TAG tag = {};
 		FMOD_ERR_CHECK_V(sound->getTag(char_ptr, index, &tag), Dictionary());
 		Dictionary info;
-		info["type"] = (int)tag.type;
-		info["datatype"] = (int)tag.datatype;
-		info["name"] = String::utf8(tag.name);
+		info["type"] = static_cast<int>(tag.type);
+		info["datatype"] = static_cast<int>(tag.datatype);
+		info["name"] = tag.name ? String::utf8(tag.name) : String();
 		switch (tag.datatype) {
 		case FMOD_TAGDATATYPE_BINARY: {
 			// void* → PackedByteArray
@@ -223,22 +240,36 @@ namespace godot {
 		} break;
 
 		case FMOD_TAGDATATYPE_INT: {
-			// void* → int (根据文档，可能是 int 或 long)
-			if (tag.datalen == sizeof(int)) {
-				info["data"] = *(int*)tag.data;
+			if (tag.data == nullptr) {
+				break;
 			}
-			else if (tag.datalen == sizeof(long)) {
-				info["data"] = (int)(*(long*)tag.data);
+
+			if (tag.datalen == sizeof(int32_t)) {
+				int32_t value = 0;
+				memcpy(&value, tag.data, sizeof(value));
+				info["data"] = static_cast<int64_t>(value);
+			}
+			else if (tag.datalen == sizeof(int64_t)) {
+				int64_t value = 0;
+				memcpy(&value, tag.data, sizeof(value));
+				info["data"] = value;
 			}
 		} break;
 
 		case FMOD_TAGDATATYPE_FLOAT: {
-			// void* → float
+			if (tag.data == nullptr) {
+				break;
+			}
+
 			if (tag.datalen == sizeof(float)) {
-				info["data"] = *(float*)tag.data;
+				float value = 0.0f;
+				memcpy(&value, tag.data, sizeof(value));
+				info["data"] = value;
 			}
 			else if (tag.datalen == sizeof(double)) {
-				info["data"] = (float)(*(double*)tag.data);
+				double value = 0.0;
+				memcpy(&value, tag.data, sizeof(value));
+				info["data"] = static_cast<float>(value);
 			}
 		} break;
 
@@ -258,10 +289,14 @@ namespace godot {
 		case FMOD_TAGDATATYPE_STRING_UTF16: {
 			// void* → String (UTF-16 字符串)
 			if (tag.data != nullptr && tag.datalen > 0) {
-				// UTF-16 需要特殊处理
-				const char16_t* utf16_data = static_cast<const char16_t*>(tag.data);
-				int len = tag.datalen / sizeof(char16_t);
-				info["data"] = String::utf16(utf16_data, len);
+				const int length = static_cast<int>(tag.datalen / sizeof(char16_t));
+				if (length <= 0) {
+					info["data"] = String();
+					break;
+				}
+				std::vector<char16_t> utf16_data(length);
+				memcpy(utf16_data.data(), tag.data, static_cast<size_t>(length) * sizeof(char16_t));
+				info["data"] = String::utf16(utf16_data.data(), length);
 			}
 			else {
 				info["data"] = String();
@@ -270,16 +305,26 @@ namespace godot {
 		}
 
 		case FMOD_TAGDATATYPE_STRING_UTF16BE: {
-			// UTF-16BE (大端序) - 需要转换
+			// FMOD 提供大端序 UTF-16，需要在传给 Godot 前转换为本机序
 			if (tag.data != nullptr && tag.datalen > 0) {
-				// 简单处理：先转为 UTF-8
 				const uint8_t* bytes = static_cast<const uint8_t*>(tag.data);
-				// 这里需要实现 UTF-16BE 到 UTF-8 的转换
-				// 为简化，先存为二进制
-				PackedByteArray data;
-				data.resize(tag.datalen);
-				memcpy(data.ptrw(), bytes, tag.datalen);
-				info["data"] = data;
+				const int length = static_cast<int>(tag.datalen / sizeof(char16_t));
+				if (length <= 0) {
+					info["data"] = String();
+					break;
+				}
+
+				std::vector<char16_t> utf16_data(length);
+				for (int i = 0; i < length; ++i) {
+					const uint16_t code_unit =
+						(static_cast<uint16_t>(bytes[i * 2]) << 8) |
+						static_cast<uint16_t>(bytes[i * 2 + 1]);
+					utf16_data[i] = static_cast<char16_t>(code_unit);
+				}
+				info["data"] = String::utf16(utf16_data.data(), length);
+			}
+			else {
+				info["data"] = String();
 			}
 			break;
 		}
@@ -380,17 +425,45 @@ namespace godot {
 		return speed;
 	}
 
+	int64_t FmodSound::_store_sync_point(FMOD_SYNCPOINT* p_point) const {
+		if (!p_point) {
+			return 0;
+		}
+
+		const int64_t point_id = next_sync_point_id++;
+		if (next_sync_point_id <= 0) {
+			next_sync_point_id = 1;
+		}
+		sync_points[point_id] = p_point;
+		return point_id;
+	}
+
+	FMOD_SYNCPOINT* FmodSound::_resolve_sync_point(int64_t p_point_id) const {
+		const auto point = sync_points.find(p_point_id);
+		return point != sync_points.end() ? point->second : nullptr;
+	}
+
 	int64_t FmodSound::add_sync_point(const unsigned int offset, FmodSystem::FmodTimeUnit time_unit, const String& name) {
 		ERR_FAIL_COND_V(!sound, 0);
 		FMOD_SYNCPOINT* point = nullptr;
-		FMOD_ERR_CHECK_V(sound->addSyncPoint(offset, static_cast<FMOD_TIMEUNIT>(time_unit), name.utf8().get_data(), &point), 0);
-		return (int64_t)(uintptr_t)point;
+		const CharString name_utf8 = name.utf8();
+		FMOD_ERR_CHECK_V(sound->addSyncPoint(offset, static_cast<FMOD_TIMEUNIT>(time_unit), name_utf8.get_data(), &point), 0);
+		return _store_sync_point(point);
 	}
 
-	bool FmodSound::delete_sync_point(const int64_t point_ptr) {
+	bool FmodSound::delete_sync_point(const int64_t point_id) {
 		ERR_FAIL_COND_V(!sound, false);
-		FMOD_SYNCPOINT* point = reinterpret_cast<FMOD_SYNCPOINT*>(static_cast<uintptr_t>(point_ptr));
+		FMOD_SYNCPOINT* point = _resolve_sync_point(point_id);
+		ERR_FAIL_NULL_V_MSG(point, false, "Unknown sync point ID");
 		FMOD_ERR_CHECK_V(sound->deleteSyncPoint(point), false);
+		for (auto it = sync_points.begin(); it != sync_points.end();) {
+			if (it->second == point) {
+				it = sync_points.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
 		return true;
 	}
 
@@ -405,13 +478,14 @@ namespace godot {
 		ERR_FAIL_COND_V(!sound, 0);
 		FMOD_SYNCPOINT* point = nullptr;
 		FMOD_ERR_CHECK_V(sound->getSyncPoint(index, &point), 0);
-		return (int64_t)(uintptr_t)point;
+		return _store_sync_point(point);
 	}
 
-	Dictionary FmodSound::get_sync_point_info(const int64_t point_ptr, FmodSystem::FmodTimeUnit time_unit) const {
+	Dictionary FmodSound::get_sync_point_info(const int64_t point_id, FmodSystem::FmodTimeUnit time_unit) const {
 		ERR_FAIL_COND_V(!sound, Dictionary());
 
-		FMOD_SYNCPOINT* point = reinterpret_cast<FMOD_SYNCPOINT*>(static_cast<uintptr_t>(point_ptr));
+		FMOD_SYNCPOINT* point = _resolve_sync_point(point_id);
+		ERR_FAIL_NULL_V_MSG(point, Dictionary(), "Unknown sync point ID");
 		char name[512] = { 0 };
 		unsigned int offset = 0;
 
@@ -423,7 +497,7 @@ namespace godot {
 		info["name"] = String(name);
 		info["offset"] = offset;
 		info["time_unit"] = time_unit;
-		info["pointer"] = point_ptr;
+		info["id"] = point_id;
 
 		return info;
 	}
@@ -445,7 +519,8 @@ namespace godot {
 	}
 
 	FMOD_RESULT FmodSound::_handle_pcmread_callback(void* data, unsigned int datalen) const {
-		if (_pcmread_callback.is_valid()) {
+		ERR_FAIL_COND_V(!data, FMOD_ERR_INVALID_PARAM);
+		if (_pcmread_callback.is_valid() && _is_main_thread()) {
 			// 将 PCM 数据包装为 PackedByteArray
 			PackedByteArray pcm_data;
 			pcm_data.resize(datalen);
@@ -455,6 +530,10 @@ namespace godot {
 			if (ret.get_type() == Variant::INT) {
 				return static_cast<FMOD_RESULT>(int(ret));
 			}
+		}
+		else if (!_is_main_thread()) {
+			// PCM 读取回调运行在混音线程时不能进入 GDScript；输出静音而不是访问非线程安全对象
+			memset(data, 0, datalen);
 		}
 		return FMOD_OK;
 	}
@@ -469,6 +548,10 @@ namespace godot {
 
 	FMOD_RESULT FmodSound::_handle_pcmsetpos_callback(int subsound, unsigned int position, FMOD_TIMEUNIT postype) const {
 		if (_pcmsetpos_callback.is_valid()) {
+			if (!_is_main_thread()) {
+				_pcmsetpos_callback.call_deferred(subsound, position, static_cast<int>(postype));
+				return FMOD_OK;
+			}
 			const Variant ret = _pcmsetpos_callback.call(subsound, position, static_cast<int>(postype));
 			if (ret.get_type() == Variant::INT) {
 				return static_cast<FMOD_RESULT>(int(ret));
@@ -487,6 +570,10 @@ namespace godot {
 
 	FMOD_RESULT FmodSound::_handle_nonblock_callback(FMOD_RESULT result) const {
 		if (_nonblock_callback.is_valid()) {
+			if (!_is_main_thread()) {
+				_nonblock_callback.call_deferred(static_cast<int>(result));
+				return FMOD_OK;
+			}
 			const Variant ret = _nonblock_callback.call(static_cast<int>(result));
 			if (ret.get_type() == Variant::INT) {
 				return static_cast<FMOD_RESULT>(int(ret));

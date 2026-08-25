@@ -124,7 +124,7 @@ namespace godot {
 		FMOD_DSP_DESCRIPTION* base_desc = get_dsp_description();
 		ERR_FAIL_COND_V(!base_desc, Ref<FmodDSP>());
 		
-		// 分配新的描述符（FMOD 会复制这个结构，所以我们可以使用栈内存）
+		// FmodSystem 会复制并持有描述符，直到 FMOD System 释放
 		FMOD_DSP_DESCRIPTION desc;
 		memcpy(&desc, base_desc, sizeof(FMOD_DSP_DESCRIPTION));
 		
@@ -132,18 +132,7 @@ namespace godot {
 		// 这样回调函数才能识别是哪个实例
 		desc.userdata = this;
 		
-		FMOD::DSP* dsp_ptr = nullptr;
-		FMOD_RESULT result = fmod_system->createDSP(&desc, &dsp_ptr);
-		if (result != FMOD_OK || !dsp_ptr) {
-			ERR_PRINT(vformat("Failed to create custom DSP: %s", FMOD_ErrorString(result)));
-			return Ref<FmodDSP>();
-		}
-		
-		Ref<FmodDSP> dsp;
-		dsp.instantiate();
-		dsp->setup(dsp_ptr);
-		
-		return dsp;
+		return system->create_dsp_from_description(desc);
 	}
 }
 

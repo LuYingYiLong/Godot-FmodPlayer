@@ -5,6 +5,9 @@
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <fmod_dsp.h>
 
+#include <mutex>
+#include <unordered_map>
+
 namespace godot {
 	class FmodDSPConnection;
 
@@ -12,9 +15,13 @@ namespace godot {
 		GDCLASS(FmodDSP, RefCounted)
 
 	private:
+		bool owns_dsp = false;
 		bool callbacks_set = false;                                                     // 记录是否设置了回调
 
-		PackedByteArray getparam_data_storage;
+		std::mutex getparam_data_mutex;
+		std::unordered_map<void*, PackedByteArray> getparam_data_storage;
+
+		void _detach_from_dsp();
 
 		Callable _create_callback;
 		Callable _release_callback;
@@ -92,9 +99,11 @@ namespace godot {
 		};
 
 		FMOD::DSP* dsp = nullptr;
-		FMOD_DSP_DESCRIPTION* dsp_description = nullptr;								// 用于自定义 DSP，管理描述符生命周期
 
-		void setup(FMOD::DSP* p_dsp, FMOD_DSP_DESCRIPTION* p_desc = nullptr);
+		void setup(
+			FMOD::DSP* p_dsp,
+			bool p_owns_dsp = true
+		);
 
 		// 连接
 		Ref<FmodDSPConnection> add_input(
@@ -221,6 +230,7 @@ namespace godot {
 		FMOD_RESULT _handle_getparam_bool(FMOD_DSP_STATE* dsp_state, int index, FMOD_BOOL* value, char* valuestr);
 		FMOD_RESULT _handle_getparam_data(FMOD_DSP_STATE* dsp_state, int index, void** data, unsigned int* length, char* valuestr);
 		FMOD_RESULT _handle_shouldiprocess(FMOD_DSP_STATE* dsp_state, FMOD_BOOL inputsidle, unsigned int length, FMOD_CHANNELMASK inmask, int inchannels, FMOD_SPEAKERMODE speakermode);
+		void _release_getparam_data(void* p_data);
 	};
 }
 

@@ -1,4 +1,6 @@
 #include "fmod_system.h"
+
+#include <godot_cpp/classes/os.hpp>
 #include "audio/fmod_sound.h"
 #include "playback/fmod_channel.h"
 #include "playback/fmod_channel_group.h"
@@ -13,6 +15,11 @@
 #include <limits>
 
 namespace godot {
+	static bool _is_main_thread() {
+		OS* os = OS::get_singleton();
+		return os && os->get_thread_caller_id() == os->get_main_thread_id();
+	}
+
 	void FmodSystem::_bind_methods() {
 		BIND_ENUM_CONSTANT(FMOD_INIT_FLAG_NORMAL);
 		BIND_ENUM_CONSTANT(FMOD_INIT_FLAG_STREAM_FROM_UPDATE);
@@ -347,7 +354,14 @@ namespace godot {
 				current_callback_system = nullptr;
 				system->set3DRolloffCallback(nullptr);
 			}
-			system->setUserData(nullptr);
+
+			void* userdata = nullptr;
+			if (owns_system && system->getUserData(&userdata) == FMOD_OK && userdata == this) {
+				system->setUserData(nullptr);
+			}
+		}
+		else {
+			_release_dsp_descriptions();
 		}
 	}
 
@@ -360,6 +374,40 @@ namespace godot {
 	void FmodSystem::_apply_3d_settings() {
 		ERR_FAIL_COND(!system);
 		FMOD_ERR_CHECK(system->set3DSettings(doppler_scale, distance_factor, rolloff_scale));
+	}
+
+	void FmodSystem::_release_dsp_descriptions() const {
+		for (FMOD_DSP_DESCRIPTION* description : dsp_descriptions) {
+			memdelete(description);
+		}
+		dsp_descriptions.clear();
+	}
+
+	Ref<FmodDSP> FmodSystem::_create_dsp_from_description(FMOD_DSP_DESCRIPTION* p_description) const {
+		ERR_FAIL_COND_V(!system || !p_description, Ref<FmodDSP>());
+
+		FMOD::DSP* dsp_ptr = nullptr;
+		const FMOD_RESULT result = system->createDSP(p_description, &dsp_ptr);
+		if (result != FMOD_OK || !dsp_ptr) {
+			memdelete(p_description);
+			if (result != FMOD_OK) {
+				FMOD_ERR_CHECK(result);
+			}
+			return Ref<FmodDSP>();
+		}
+
+		dsp_descriptions.push_back(p_description);
+
+		Ref<FmodDSP> dsp;
+		dsp.instantiate();
+		dsp->setup(dsp_ptr);
+		return dsp;
+	}
+
+	Ref<FmodDSP> FmodSystem::create_dsp_from_description(const FMOD_DSP_DESCRIPTION& p_description) const {
+		FMOD_DSP_DESCRIPTION* description = memnew(FMOD_DSP_DESCRIPTION);
+		memcpy(description, &p_description, sizeof(FMOD_DSP_DESCRIPTION));
+		return _create_dsp_from_description(description);
 	}
 
 	bool FmodSystem::system_is_valid() const {
@@ -376,17 +424,19 @@ namespace godot {
 
 	void FmodSystem::setup(FMOD::System* p_system) {
 		ERR_FAIL_COND_MSG(!p_system, "System pointer is null");
-
-		if (system) {
-			if (current_callback_system == this) {
-				current_callback_system = nullptr;
-				system->set3DRolloffCallback(nullptr);
-			}
-			system->setUserData(nullptr);
-		}
+		ERR_FAIL_COND_MSG(system != nullptr, "FmodSystem is already bound to an FMOD System");
 
 		system = p_system;
+		owns_system = true;
 		system->setUserData(this);
+	}
+
+	void FmodSystem::setup_borrowed(FMOD::System* p_system) {
+		ERR_FAIL_COND_MSG(!p_system, "System pointer is null");
+		ERR_FAIL_COND_MSG(system != nullptr, "FmodSystem is already bound to an FMOD System");
+
+		system = p_system;
+		owns_system = false;
 	}
 
 	Ref<FmodSystem> FmodSystem::create_system() {
@@ -407,6 +457,7 @@ namespace godot {
 
 	void FmodSystem::close() {
 		ERR_FAIL_COND(!system);
+		ERR_FAIL_COND_MSG(!owns_system, "Cannot close a borrowed FMOD System");
 		if (current_callback_system == this) {
 			current_callback_system = nullptr;
 			_3d_rolloff_callback = Callable();
@@ -417,18 +468,33 @@ namespace godot {
 
 	void FmodSystem::release() {
 		ERR_FAIL_COND(!system);
-		if (current_callback_system == this) {
+		ERR_FAIL_COND_MSG(!owns_system, "Cannot release a borrowed FMOD System");
+		const bool had_3d_rolloff_callback = current_callback_system == this;
+		if (had_3d_rolloff_callback) {
 			current_callback_system = nullptr;
-			_3d_rolloff_callback = Callable();
 			FMOD_ERR_CHECK(system->set3DRolloffCallback(nullptr));
 		}
-		system->setUserData(nullptr);
+		void* userdata = nullptr;
+		const bool had_userdata = system->getUserData(&userdata) == FMOD_OK && userdata == this;
+		if (had_userdata) {
+			system->setUserData(nullptr);
+		}
 		FMOD_RESULT result = system->release();
 		if (result != FMOD_OK) {
 			ERR_PRINT(vformat("Failed to release FMOD System: %s", FMOD_ErrorString(result)));
+			if (had_userdata) {
+				FMOD_ERR_CHECK(system->setUserData(this));
+			}
+			if (had_3d_rolloff_callback) {
+				current_callback_system = this;
+				FMOD_ERR_CHECK(system->set3DRolloffCallback(GD_3D_ROLLOFF_CALLBACK));
+			}
 			return;
 		}
 		system = nullptr;
+		owns_system = false;
+		_3d_rolloff_callback = Callable();
+		_release_dsp_descriptions();
 	}
 
 	void FmodSystem::update() {
@@ -900,9 +966,9 @@ namespace godot {
 		long long sample_bytes_read = 0, stream_bytes_read = 0, other_bytes_read = 0;
 		FMOD_ERR_CHECK_V(system->getFileUsage(&sample_bytes_read, &stream_bytes_read, &other_bytes_read), Dictionary());
 		Dictionary result;
-		result["sample_bytes_read"] = (int64_t)sample_bytes_read;
-		result["stream_bytes_read"] = (int64_t)stream_bytes_read;
-		result["other_bytes_read"] = (int64_t)other_bytes_read;
+		result["sample_bytes_read"] = static_cast<int64_t>(sample_bytes_read);
+		result["stream_bytes_read"] = static_cast<int64_t>(stream_bytes_read);
+		result["other_bytes_read"] = static_cast<int64_t>(other_bytes_read);
 		return result;
 	}
 
@@ -1018,7 +1084,7 @@ namespace godot {
 		}
 
 		FMOD_ERR_CHECK_V(system->createSound(
-			(const char*)sound->data.ptr(),
+			reinterpret_cast<const char*>(sound->data.ptr()),
 			mode,
 			&exinfo,
 			&sound_ptr
@@ -1075,7 +1141,7 @@ namespace godot {
 
 			FMOD::Sound* sound_ptr = nullptr;
 			FMOD_ERR_CHECK_V(system->createStream(
-				(const char*)sound->data.ptr(),
+				reinterpret_cast<const char*>(sound->data.ptr()),
 				stream_mode,
 				&exinfo,
 				&sound_ptr
@@ -1111,14 +1177,13 @@ namespace godot {
 	Ref<FmodDSP> FmodSystem::create_dsp(const String& name) const {
 		ERR_FAIL_COND_V(!system, Ref<FmodDSP>());
 
-		// 创建动态 DSP 描述结构
-		// 注意：FMOD 会保留指向此描述的指针，因此它必须在 DSP 生命周期内保持有效
-		// 我们将描述存储在 FmodDSP 对象中，以便自动管理生命周期
+		// FMOD 直接引用描述符，描述符由 FmodSystem 持有到 System::release
 		FMOD_DSP_DESCRIPTION* desc = memnew(FMOD_DSP_DESCRIPTION);
 		memset(desc, 0, sizeof(FMOD_DSP_DESCRIPTION));
 
 		desc->pluginsdkversion = FMOD_PLUGIN_SDK_VERSION;
-		strncpy(desc->name, name.utf8().get_data(), sizeof(desc->name) - 1);
+		const CharString name_utf8 = name.utf8();
+		strncpy(desc->name, name_utf8.get_data(), sizeof(desc->name) - 1);
 		desc->numinputbuffers = 1;
 		desc->numoutputbuffers = 1;
 
@@ -1140,29 +1205,14 @@ namespace godot {
 		desc->getparameterdata = GD_FMOD_DSP_GETPARAM_DATA_CALLBACK;
 		desc->shouldiprocess = GD_FMOD_DSP_SHOULDIPROCESS_CALLBACK;
 
-		FMOD::DSP* dsp_ptr = nullptr;
-		FMOD_RESULT result = system->createDSP(desc, &dsp_ptr);
-		if (result != FMOD_OK) {
-			memdelete(desc);
-			FMOD_ERR_CHECK(result);
-			return Ref<FmodDSP>();
-		}
-		if (!dsp_ptr) {
-			memdelete(desc);
-			ERR_FAIL_V_MSG(Ref<FmodDSP>(), "FMOD returned a null DSP pointer.");
-		}
-
-		Ref<FmodDSP> dsp;
-		dsp.instantiate();
-		dsp->setup(dsp_ptr, desc);
-		return dsp;
+		return _create_dsp_from_description(desc);
 	}
 
 	Ref<FmodDSP> FmodSystem::create_dsp_by_type(unsigned int type) const {
 		ERR_FAIL_COND_V(!system, Ref<FmodDSP>());
 		ERR_FAIL_COND_V_MSG(type >= FMOD_DSP_TYPE_MAX, Ref<FmodDSP>(), "Invalid built-in DSP type.");
 		FMOD::DSP* dsp_ptr = nullptr;
-		FMOD_ERR_CHECK_V(system->createDSPByType((FMOD_DSP_TYPE)type, &dsp_ptr), Ref<FmodDSP>());
+		FMOD_ERR_CHECK_V(system->createDSPByType(static_cast<FMOD_DSP_TYPE>(type), &dsp_ptr), Ref<FmodDSP>());
 		Ref<FmodDSP> dsp;
 		dsp.instantiate();
 		ERR_FAIL_NULL_V(dsp_ptr, Ref<FmodDSP>());
@@ -1407,7 +1457,7 @@ namespace godot {
 	) {
 		ERR_FAIL_COND(!system || channel_group.is_null() || channel_group->channel_control_is_null());
 		FMOD_PORT_TYPE fmod_port_type = static_cast<FMOD_PORT_TYPE>(prot_type);
-		FMOD_ERR_CHECK(system->attachChannelGroupToPort(fmod_port_type, (FMOD_PORT_INDEX)port_index, channel_group->channel_group, pass_thru));
+		FMOD_ERR_CHECK(system->attachChannelGroupToPort(fmod_port_type, static_cast<FMOD_PORT_INDEX>(port_index), channel_group->channel_group, pass_thru));
 	}
 
 	void FmodSystem::detach_channel_group_from_port(Ref<FmodChannelGroup> channel_group) {
@@ -1570,7 +1620,7 @@ namespace godot {
 	}
 
 	float FmodSystem::_handle_3d_rolloff_callback(float distance) const {
-		if (_3d_rolloff_callback.is_valid()) {
+		if (_3d_rolloff_callback.is_valid() && _is_main_thread()) {
 			const Variant ret = _3d_rolloff_callback.call(distance);
 			if (ret.get_type() == Variant::FLOAT) {
 				return ret;
